@@ -8,7 +8,7 @@
 use crate::{Instance, ADC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
 use imxrt_ral as ral;
 
-impl crate::CCM<ral::lpuart::Instance> {
+impl crate::CCM<ral::lpuart::Instance, ral::lpspi::Instance> {
     /// Converts the `imxrt-ral` CCM instance into the `CCM` driver
     ///
     /// This is safer than using `new()`, since we take ownership of the
@@ -17,7 +17,7 @@ impl crate::CCM<ral::lpuart::Instance> {
     /// ```no_run
     /// use imxrt_ccm::CCM;
     /// use imxrt_ral::ccm;
-    /// 
+    ///
     /// let ccm = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
     /// ```
     pub fn from_ral_ccm(_: ral::ccm::Instance) -> Self {

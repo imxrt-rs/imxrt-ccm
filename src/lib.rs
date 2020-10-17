@@ -39,7 +39,8 @@ pub unsafe trait Instance {
     fn is_valid(inst: Self::Inst) -> bool;
 }
 
-/// Helper function to make matching easier.
+/// Returns `Some(inst)` if `inst` is valid for this peripheral, or
+/// `None` if `inst` is not valid.
 #[inline(always)]
 fn check_instance<I: Instance>(inst: I::Inst) -> Option<I::Inst> {
     Some(inst).filter(|inst| I::is_valid(*inst))
@@ -146,7 +147,7 @@ pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
 /// Most root clocks are disabled. Call `enable`, and supply the
 /// `handle`, to enable them.
 #[non_exhaustive]
-pub struct CCM<U> {
+pub struct CCM<U, S> {
     /// The handle to the CCM register block
     ///
     /// `Handle` is used throughout the HAL
@@ -162,14 +163,14 @@ pub struct CCM<U> {
     /// The SPI clock
     ///
     /// `spi_clock` is for [`SPI`](../struct.SPI.html) peripherals.
-    pub spi_clock: Disabled<SPIClock>,
+    pub spi_clock: Disabled<SPIClock<S>>,
     /// The I2C clock
     ///
     /// `i2c_clock` is for [`I2C`](../struct.I2C.html) peripherals.
     pub i2c_clock: Disabled<I2CClock>,
 }
 
-impl<U> CCM<U> {
+impl<U, S> CCM<U, S> {
     /// Construct a new CCM peripheral
     ///
     /// # Safety
@@ -183,7 +184,7 @@ impl<U> CCM<U> {
             handle: Handle(()),
             perclock: Disabled(PerClock(())),
             uart_clock: Disabled(UARTClock::assume_enabled()),
-            spi_clock: Disabled(SPIClock(())),
+            spi_clock: Disabled(SPIClock::assume_enabled()),
             i2c_clock: Disabled(I2CClock(())),
         }
     }
@@ -247,9 +248,9 @@ impl<C> UARTClock<C> {
 }
 
 /// The SPI clock
-pub struct SPIClock(());
+pub struct SPIClock<S>(PhantomData<S>);
 
-impl SPIClock {
+impl<S> SPIClock<S> {
     /// Assume that the clock is enabled, and acquire the enabled clock
     ///
     /// # Safety
@@ -257,8 +258,8 @@ impl SPIClock {
     /// This may create an alias to memory that is mutably owned by another instance.
     /// Users should only `assume_enabled` when configuring clocks through another
     /// API.
-    pub unsafe fn assume_enabled() -> Self {
-        Self(())
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
     }
 }
 

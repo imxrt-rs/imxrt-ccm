@@ -6,10 +6,20 @@ const CLOCK_DIVIDER: u32 = 5;
 /// If changing this, make sure to update `clock`
 const CLOCK_HZ: u32 = 528_000_000 / CLOCK_DIVIDER;
 
-impl Disabled<SPIClock> {
+impl<S> Disabled<SPIClock<S>> {
     /// Enable the SPI clocks
-    pub fn enable(self, _: &mut Handle) -> SPIClock {
-        unsafe { configure() };
+    pub fn enable(self, _: &mut Handle) -> SPIClock<S>
+    where
+        S: Instance<Inst = SPI>,
+    {
+        unsafe {
+            clock_gate::<S>(SPI::SPI1, ClockGate::Off);
+            clock_gate::<S>(SPI::SPI2, ClockGate::Off);
+            clock_gate::<S>(SPI::SPI3, ClockGate::Off);
+            clock_gate::<S>(SPI::SPI4, ClockGate::Off);
+
+            configure()
+        };
         self.0
     }
 }
@@ -23,10 +33,13 @@ pub enum SPI {
     SPI4,
 }
 
-impl SPIClock {
+impl<S> SPIClock<S> {
     /// Set the clock gate for the SPI instance
-    pub fn clock_gate<I: Instance<Inst = SPI>>(&mut self, spi: &mut I, gate: ClockGate) {
-        unsafe { clock_gate(spi.instance(), gate) }
+    pub fn clock_gate(&mut self, spi: &mut S, gate: ClockGate)
+    where
+        S: Instance<Inst = SPI>,
+    {
+        unsafe { clock_gate::<S>(spi.instance(), gate) }
     }
 
     /// Returns the SPI clock frequency (Hz)
@@ -42,16 +55,16 @@ impl SPIClock {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the [`SPIClock`](struct.SPIClock.html) for a
 /// safer interface.
-pub unsafe fn clock_gate(spi: SPI, value: ClockGate) {
-    let ccgr = CCGR_BASE.add(1);
-    let gate = match spi {
-        SPI::SPI1 => 0,
-        SPI::SPI2 => 1,
-        SPI::SPI3 => 2,
-        SPI::SPI4 => 3,
+pub unsafe fn clock_gate<S: Instance<Inst = SPI>>(spi: SPI, value: ClockGate) {
+    let gate = match super::check_instance::<S>(spi) {
+        Some(SPI::SPI1) => 0,
+        Some(SPI::SPI2) => 1,
+        Some(SPI::SPI3) => 2,
+        Some(SPI::SPI4) => 3,
+        _ => return,
     };
 
-    set_clock_gate(ccgr, &[gate], value as u8);
+    set_clock_gate(CCGR_BASE.add(1), &[gate], value as u8);
 }
 
 /// Configure the SPI clock root
