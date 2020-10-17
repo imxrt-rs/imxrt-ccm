@@ -45,6 +45,15 @@ pub enum ADC {
     ADC2,
 }
 
+/// Peripheral instance identifier for PWM
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PWM {
+    PWM1,
+    PWM2,
+    PWM3,
+    PWM4,
+}
+
 /// Handle to the CCM register block
 ///
 /// `Handle` also supports clock gating for peripherals that
@@ -70,6 +79,14 @@ impl Handle {
     {
         unsafe { clock_gate_adc(adc.instance(), gate) }
     }
+
+    /// Set the clock gate for the PWM peripheral
+    pub fn clock_gate_pwm<P>(&mut self, pwm: &mut P, gate: ClockGate)
+    where
+        P: Instance<Inst = PWM>,
+    {
+        unsafe { clock_gate_pwm(pwm.instance(), gate) }
+    }
 }
 
 /// Set the clock gate for the DMA controller
@@ -94,6 +111,22 @@ pub unsafe fn clock_gate_adc(adc: ADC, gate: ClockGate) {
     match adc {
         ADC::ADC1 => set_clock_gate(CCGR_BASE.add(1), &[8], gate as u8),
         ADC::ADC2 => set_clock_gate(CCGR_BASE.add(1), &[4], gate as u8),
+    }
+}
+
+/// Set the clock gate for the PWM instance
+///
+/// # Safety
+///
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
+/// safer interface.
+pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
+    match pwm {
+        PWM::PWM1 => set_clock_gate(CCGR_BASE.add(4), &[8], gate as u8),
+        PWM::PWM2 => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
+        PWM::PWM3 => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
+        PWM::PWM4 => set_clock_gate(CCGR_BASE.add(4), &[10], gate as u8),
     }
 }
 
