@@ -10,10 +10,20 @@ const I2C_CLOCK_HZ: u32 = crate::OSCILLATOR_FREQUENCY_HZ / I2C_CLOCK_DIVIDER;
 /// I2C peripheral clock divider
 const I2C_CLOCK_DIVIDER: u32 = 3;
 
-impl Disabled<I2CClock> {
+impl<I> Disabled<I2CClock<I>> {
     /// Enable the I2C clocks
-    pub fn enable(self, _: &mut Handle) -> I2CClock {
-        unsafe { configure() };
+    pub fn enable(self, _: &mut Handle) -> I2CClock<I>
+    where
+        I: Instance<Inst = I2C>,
+    {
+        unsafe {
+            clock_gate::<I>(I2C::I2C1, ClockGate::Off);
+            clock_gate::<I>(I2C::I2C2, ClockGate::Off);
+            clock_gate::<I>(I2C::I2C3, ClockGate::Off);
+            clock_gate::<I>(I2C::I2C4, ClockGate::Off);
+
+            configure()
+        };
         self.0
     }
 }
@@ -27,10 +37,13 @@ pub enum I2C {
     I2C4,
 }
 
-impl I2CClock {
+impl<I> I2CClock<I> {
     /// Set the clock gate gate for the I2C instance
-    pub fn clock_gate<I: Instance<Inst = I2C>>(&mut self, i2c: &mut I, gate: ClockGate) {
-        unsafe { clock_gate(i2c.instance(), gate) }
+    pub fn clock_gate(&mut self, i2c: &mut I, gate: ClockGate)
+    where
+        I: Instance<Inst = I2C>,
+    {
+        unsafe { clock_gate::<I>(i2c.instance(), gate) }
     }
 
     /// Returns the I2C clock frequency (Hz)
@@ -46,13 +59,14 @@ impl I2CClock {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the [`I2CClock`](struct.I2CClock.html) for a
 /// safer interface.
-pub unsafe fn clock_gate(i2c: I2C, gate: ClockGate) {
+pub unsafe fn clock_gate<I: Instance<Inst = I2C>>(i2c: I2C, gate: ClockGate) {
     let value = gate as u8;
-    match i2c {
-        I2C::I2C1 => set_clock_gate(CCGR_BASE.add(2), &[3], value),
-        I2C::I2C2 => set_clock_gate(CCGR_BASE.add(2), &[4], value),
-        I2C::I2C3 => set_clock_gate(CCGR_BASE.add(2), &[5], value),
-        I2C::I2C4 => set_clock_gate(CCGR_BASE.add(6), &[12], value),
+    match super::check_instance::<I>(i2c) {
+        Some(I2C::I2C1) => set_clock_gate(CCGR_BASE.add(2), &[3], value),
+        Some(I2C::I2C2) => set_clock_gate(CCGR_BASE.add(2), &[4], value),
+        Some(I2C::I2C3) => set_clock_gate(CCGR_BASE.add(2), &[5], value),
+        Some(I2C::I2C4) => set_clock_gate(CCGR_BASE.add(6), &[12], value),
+        _ => (),
     }
 }
 

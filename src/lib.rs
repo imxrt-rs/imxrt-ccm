@@ -147,7 +147,7 @@ pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
 /// Most root clocks are disabled. Call `enable`, and supply the
 /// `handle`, to enable them.
 #[non_exhaustive]
-pub struct CCM<U, S> {
+pub struct CCM<U, S, I> {
     /// The handle to the CCM register block
     ///
     /// `Handle` is used throughout the HAL
@@ -167,10 +167,10 @@ pub struct CCM<U, S> {
     /// The I2C clock
     ///
     /// `i2c_clock` is for [`I2C`](../struct.I2C.html) peripherals.
-    pub i2c_clock: Disabled<I2CClock>,
+    pub i2c_clock: Disabled<I2CClock<I>>,
 }
 
-impl<U, S> CCM<U, S> {
+impl<U, S, I> CCM<U, S, I> {
     /// Construct a new CCM peripheral
     ///
     /// # Safety
@@ -185,7 +185,7 @@ impl<U, S> CCM<U, S> {
             perclock: Disabled(PerClock(())),
             uart_clock: Disabled(UARTClock::assume_enabled()),
             spi_clock: Disabled(SPIClock::assume_enabled()),
-            i2c_clock: Disabled(I2CClock(())),
+            i2c_clock: Disabled(I2CClock::assume_enabled()),
         }
     }
 }
@@ -264,9 +264,9 @@ impl<S> SPIClock<S> {
 }
 
 /// The I2C clock
-pub struct I2CClock(());
+pub struct I2CClock<I>(PhantomData<I>);
 
-impl I2CClock {
+impl<I> I2CClock<I> {
     /// Assume that the clock is enabled, and acquire the enabled clock
     ///
     /// # Safety
@@ -274,8 +274,8 @@ impl I2CClock {
     /// This may create an alias to memory that is mutably owned by another instance.
     /// Users should only `assume_enabled` when configuring clocks through another
     /// API.
-    pub unsafe fn assume_enabled() -> Self {
-        Self(())
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
     }
 }
 
