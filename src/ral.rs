@@ -105,35 +105,45 @@ unsafe impl Instance for ral::lpuart::Instance {
     }
 }
 
-unsafe impl Instance for ral::adc::Instance {
+#[cfg(feature = "imxrt1060")]
+use ral::adc;
+#[cfg(feature = "imxrt1010")]
+use ral::adc1 as adc;
+
+unsafe impl Instance for adc::Instance {
     type Inst = ADC;
     fn instance(&self) -> ADC {
         #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
         compile_error!("Ensure that ADC instances are correct");
 
         match &**self as *const _ {
-            ral::adc::ADC1 => ADC::ADC1,
+            adc::ADC1 => ADC::ADC1,
             #[cfg(feature = "imxrt1060")]
-            ral::adc::ADC2 => ADC::ADC2,
+            adc::ADC2 => ADC::ADC2,
             _ => unreachable!(),
         }
     }
 }
 
-unsafe impl Instance for ral::pwm::Instance {
+#[cfg(feature = "imxrt1060")]
+use ral::pwm;
+#[cfg(feature = "imxrt1010")]
+use ral::pwm1 as pwm;
+
+unsafe impl Instance for pwm::Instance {
     type Inst = PWM;
     fn instance(&self) -> PWM {
         #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
         compile_error!("Ensure that PWM instances are correct");
 
         match &**self as *const _ {
-            ral::pwm::PWM1 => PWM::PWM1,
+            pwm::PWM1 => PWM::PWM1,
             #[cfg(feature = "imxrt1060")]
-            ral::pwm::PWM2 => PWM::PWM2,
+            pwm::PWM2 => PWM::PWM2,
             #[cfg(feature = "imxrt1060")]
-            ral::pwm::PWM3 => PWM::PWM3,
+            pwm::PWM3 => PWM::PWM3,
             #[cfg(feature = "imxrt1060")]
-            ral::pwm::PWM4 => PWM::PWM4,
+            pwm::PWM4 => PWM::PWM4,
             _ => unreachable!(),
         }
     }
