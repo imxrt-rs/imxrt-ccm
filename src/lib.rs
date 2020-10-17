@@ -7,6 +7,12 @@ mod perclock;
 mod spi;
 mod uart;
 
+#[cfg(all(
+    feature = "imxrt-ral",
+    any(feature = "imxrt1011", feature = "imxrt1062")
+))]
+mod ral;
+
 pub use i2c::{clock_gate as clock_gate_i2c, enable as enable_i2c, I2C};
 pub use perclock::{clock_gate_gpt, clock_gate_pit, enable as enable_perclock, GPT, PIT};
 pub use spi::{clock_gate as clock_gate_spi, enable as enable_spi, SPI};

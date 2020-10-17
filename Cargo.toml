@@ -7,4 +7,10 @@ description = """
 Driver for the i.MX RT clock control module (CCM)
 """
 
-[dependencies]
+[dependencies.imxrt-ral]
+version = "0.4"
+optional = true
+
+[features]
+imxrt1011 = []
+imxrt1062 = []
