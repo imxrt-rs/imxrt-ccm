@@ -5,7 +5,7 @@
 //! We know all of these trait implementations to be safe,
 //! since we've studied the RAL and know its guarantees.
 
-use crate::{Instance, DMA, GPT, I2C, PIT, SPI, UART};
+use crate::{Instance, ADC, DMA, GPT, I2C, PIT, SPI, UART};
 use imxrt_ral as ral;
 
 impl crate::CCM {
@@ -16,7 +16,7 @@ impl crate::CCM {
     pub fn from_ral_ccm(_: ral::ccm::Instance) -> Self {
         // Safety: we "own" the CCM instance, so no one
         // else can (safely) access it.
-        unsafe { CCM::new() }
+        unsafe { crate::CCM::new() }
     }
 }
 
@@ -100,6 +100,21 @@ unsafe impl Instance for ral::lpuart::Instance {
             ral::lpuart::LPUART7 => UART::UART7,
             #[cfg(feature = "imxrt1062")]
             ral::lpuart::LPUART8 => UART::UART8,
+            _ => unreachable!(),
+        }
+    }
+}
+
+unsafe impl Instance for ral::adc::Instance {
+    type Inst = ADC;
+    fn instance(&self) -> ADC {
+        #[cfg(not(any(feature = "imxrt1011", feature = "imxrt1062")))]
+        compile_error!("Ensure that ADC instances are correct");
+
+        match &**self as *const _ {
+            ral::adc::ADC1 => ADC::ADC1,
+            #[cfg(feature = "imxrt1062")]
+            ral::adc::ADC2 => ADC::ADC2,
             _ => unreachable!(),
         }
     }

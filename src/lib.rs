@@ -38,6 +38,13 @@ pub unsafe trait Instance {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DMA;
 
+/// Peripheral instance identifier for ADCs
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ADC {
+    ADC1,
+    ADC2,
+}
+
 /// Handle to the CCM register block
 ///
 /// `Handle` also supports clock gating for peripherals that
@@ -55,17 +62,39 @@ impl Handle {
     {
         unsafe { clock_gate_dma(gate) };
     }
+
+    /// Set the clock gate for the ADC peripheral
+    pub fn clock_gate_adc<A>(&mut self, adc: &mut A, gate: ClockGate)
+    where
+        A: Instance<Inst = ADC>,
+    {
+        unsafe { clock_gate_adc(adc.instance(), gate) }
+    }
 }
 
 /// Set the clock gate for the DMA controller
 ///
 /// # Safety
 ///
-/// This could be called by anyone who can access the DMA register block, which is always
-/// available. Consider using [`Handle::clock_gate_dma`](struct.Handle.html#method.clock_gate_dma)
-/// which supports a safer interface.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
+/// safer interface.
 pub unsafe fn clock_gate_dma(gate: ClockGate) {
     set_clock_gate(CCGR_BASE.add(5), &[3], gate as u8);
+}
+
+/// Set the clock gate for the ADC instance
+///
+/// # Safety
+///
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
+/// safer interface.
+pub unsafe fn clock_gate_adc(adc: ADC, gate: ClockGate) {
+    match adc {
+        ADC::ADC1 => set_clock_gate(CCGR_BASE.add(1), &[8], gate as u8),
+        ADC::ADC2 => set_clock_gate(CCGR_BASE.add(1), &[4], gate as u8),
+    }
 }
 
 /// The root clocks and CCM handle
