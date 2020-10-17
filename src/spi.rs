@@ -14,7 +14,7 @@ impl Disabled<SPIClock> {
     }
 }
 
-/// Peripheral instance identifier for I2C
+/// Peripheral instance identifier for SPI
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SPI {
     SPI1,
@@ -39,8 +39,9 @@ impl SPIClock {
 ///
 /// # Safety
 ///
-/// This could be called anywhere, by anyone who uses the globally-accessible SPI memory.
-/// Consider using the safer `SPIClock::clock_gate` API.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`SPIClock`](struct.SPIClock.html) for a
+/// safer interface.
 pub unsafe fn clock_gate(spi: SPI, value: ClockGate) {
     let ccgr = CCGR_BASE.add(1);
     let gate = match spi {
@@ -57,8 +58,9 @@ pub unsafe fn clock_gate(spi: SPI, value: ClockGate) {
 ///
 /// # Safety
 ///
-/// This modifies easily-accessible global state. Consider using `SPIClock::enable`
-/// for a safery API.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`SPIClock`](struct.SPIClock.html) for a
+/// safer interface.
 #[inline(always)]
 pub unsafe fn enable() {
     const CBCMR: *mut u32 = 0x400F_C018 as *mut u32;

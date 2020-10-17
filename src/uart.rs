@@ -10,7 +10,7 @@ impl Disabled<UARTClock> {
     }
 }
 
-/// Peripheral instance identifier for I2C
+/// Peripheral instance identifier for UART
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UART {
     UART1,
@@ -39,8 +39,9 @@ impl UARTClock {
 ///
 /// # Safety
 ///
-/// This could be called anywhere, by anyone who uses the globally-accessible UART memory.
-/// Consider using the safer `UARTClock::clock_gate` API.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`UARTClock`](struct.UARTClock.html) for a
+/// safer interface.
 pub unsafe fn clock_gate(uart: UART, gate: ClockGate) {
     let value = gate as u8;
     match uart {
@@ -59,8 +60,9 @@ pub unsafe fn clock_gate(uart: UART, gate: ClockGate) {
 ///
 /// # Safety
 ///
-/// This modifies easily-accessible global state. Consider using `UartClock::enable`
-/// for a safery API.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`UARTClock`](struct.UARTClock.html) for a
+/// safer interface.
 #[inline(always)]
 pub unsafe fn enable() {
     const CSCDR1: *mut u32 = 0x400F_C024 as *mut u32;

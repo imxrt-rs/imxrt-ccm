@@ -45,9 +45,9 @@ impl Disabled<PerClock> {
 ///
 /// # Safety
 ///
-/// This could be used by anyone who supplies a GPT register block, which is globally
-/// available. Consider using [`PerClock::clock_gate_gpt`](struct.PerClock.html#method.clock_gate_gpt)
-/// for a safer interface.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`PerClock`](struct.PerClock.html) for a
+/// safer interface.
 pub unsafe fn clock_gate_gpt(gpt: GPT, gate: ClockGate) {
     let value = gate as u8;
     match gpt {
@@ -71,8 +71,9 @@ pub unsafe fn clock_gate_pit(gate: ClockGate) {
 ///
 /// # Safety
 ///
-/// This modifies globally-accessible memory, and it may affect the behaviors of any enabled
-/// PITs or GPTs. You should not use this method if you've already enabled those timers.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`PerClock`](struct.PerClock.html) for a
+/// safer interface.
 #[inline(always)]
 pub unsafe fn enable() {
     const CSCMR1: *mut u32 = 0x400F_C01C as *mut u32;

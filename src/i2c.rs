@@ -43,8 +43,9 @@ impl I2CClock {
 ///
 /// # Safety
 ///
-/// This could be called anywhere, by anyone who uses the globally-accessible I2C memory.
-/// Consider using the safer `I2CClock::clock_gate` API.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`I2CClock`](struct.I2CClock.html) for a
+/// safer interface.
 pub unsafe fn clock_gate(i2c: I2C, gate: ClockGate) {
     let value = gate as u8;
     match i2c {
@@ -59,8 +60,9 @@ pub unsafe fn clock_gate(i2c: I2C, gate: ClockGate) {
 ///
 /// # Safety
 ///
-/// This modifies easily-accessible global state. Consider using `I2CClock::enable`
-/// for a safery API.
+/// This could be called anywhere, modifying global memory that's owned by
+/// the CCM. Consider using the [`I2CClock`](struct.I2CClock.html) for a
+/// safer interface.
 #[inline(always)]
 pub unsafe fn enable() {
     const CSCDR2: *mut u32 = 0x400F_C038 as *mut u32;
