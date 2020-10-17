@@ -18,6 +18,8 @@ pub use perclock::{clock_gate_gpt, clock_gate_pit, configure as configure_perclo
 pub use spi::{clock_gate as clock_gate_spi, configure as configure_spi, SPI};
 pub use uart::{clock_gate as clock_gate_uart, configure as configure_uart, UART};
 
+use core::marker::PhantomData;
+
 /// A peripheral instance whose clock can be gated
 ///
 /// # Safety
@@ -32,6 +34,15 @@ pub unsafe trait Instance {
     type Inst: Copy + PartialEq;
     /// Returns the identifier that describes this peripheral instance
     fn instance(&self) -> Self::Inst;
+    /// Returns `true` if this instance is valid for a particular
+    /// implementation.
+    fn is_valid(inst: Self::Inst) -> bool;
+}
+
+/// Helper function to make matching easier.
+#[inline(always)]
+fn check_instance<I: Instance>(inst: I::Inst) -> Option<I::Inst> {
+    Some(inst).filter(|inst| I::is_valid(*inst))
 }
 
 /// Peripheral instance identifier for DMA
@@ -135,7 +146,7 @@ pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
 /// Most root clocks are disabled. Call `enable`, and supply the
 /// `handle`, to enable them.
 #[non_exhaustive]
-pub struct CCM {
+pub struct CCM<U> {
     /// The handle to the CCM register block
     ///
     /// `Handle` is used throughout the HAL
@@ -147,7 +158,7 @@ pub struct CCM {
     /// The UART clock
     ///
     /// `uart_clock` is for [`UART`](../struct.UART.html) peripherals.
-    pub uart_clock: Disabled<UARTClock>,
+    pub uart_clock: Disabled<UARTClock<U>>,
     /// The SPI clock
     ///
     /// `spi_clock` is for [`SPI`](../struct.SPI.html) peripherals.
@@ -158,7 +169,7 @@ pub struct CCM {
     pub i2c_clock: Disabled<I2CClock>,
 }
 
-impl CCM {
+impl<U> CCM<U> {
     /// Construct a new CCM peripheral
     ///
     /// # Safety
@@ -171,7 +182,7 @@ impl CCM {
         CCM {
             handle: Handle(()),
             perclock: Disabled(PerClock(())),
-            uart_clock: Disabled(UARTClock(())),
+            uart_clock: Disabled(UARTClock::assume_enabled()),
             spi_clock: Disabled(SPIClock(())),
             i2c_clock: Disabled(I2CClock(())),
         }
@@ -220,9 +231,9 @@ impl PerClock {
 }
 
 /// The UART clock
-pub struct UARTClock(());
+pub struct UARTClock<C>(PhantomData<C>);
 
-impl UARTClock {
+impl<C> UARTClock<C> {
     /// Assume that the clock is enabled, and acquire the enabled clock
     ///
     /// # Safety
@@ -230,8 +241,8 @@ impl UARTClock {
     /// This may create an alias to memory that is mutably owned by another instance.
     /// Users should only `assume_enabled` when configuring clocks through another
     /// API.
-    pub unsafe fn assume_enabled() -> Self {
-        Self(())
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
     }
 }
 
@@ -276,7 +287,6 @@ const CCGR_BASE: *mut u32 = 0x400F_C068 as *mut u32;
 /// Should only be used when you have a mutable reference to an enabled clock.
 /// Should only be used on a valid clock gate register.
 #[inline(always)]
-#[allow(unused)] // Used when features are enabled
 unsafe fn set_clock_gate(ccgr: *mut u32, gates: &[usize], value: u8) {
     const MASK: u32 = 0b11;
     let mut register = core::ptr::read_volatile(ccgr);
