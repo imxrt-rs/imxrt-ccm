@@ -12,5 +12,5 @@ version = "0.4"
 optional = true
 
 [features]
-imxrt1011 = []
-imxrt1062 = []
+imxrt1010 = []
+imxrt1060 = []

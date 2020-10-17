@@ -9,7 +9,7 @@ mod uart;
 
 #[cfg(all(
     feature = "imxrt-ral",
-    any(feature = "imxrt1011", feature = "imxrt1062")
+    any(feature = "imxrt1010", feature = "imxrt1060")
 ))]
 mod ral;
 
