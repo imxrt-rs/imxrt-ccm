@@ -5,7 +5,7 @@ use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, UARTClock, CC
 impl Disabled<UARTClock> {
     /// Enable the UART clocks
     pub fn enable(self, _: &mut Handle) -> UARTClock {
-        unsafe { enable() };
+        unsafe { configure() };
         self.0
     }
 }
@@ -56,7 +56,7 @@ pub unsafe fn clock_gate(uart: UART, gate: ClockGate) {
     }
 }
 
-/// Enable the UART clock root
+/// Configure the UART clock root
 ///
 /// # Safety
 ///
@@ -64,7 +64,7 @@ pub unsafe fn clock_gate(uart: UART, gate: ClockGate) {
 /// the CCM. Consider using the [`UARTClock`](struct.UARTClock.html) for a
 /// safer interface.
 #[inline(always)]
-pub unsafe fn enable() {
+pub unsafe fn configure() {
     const CSCDR1: *mut u32 = 0x400F_C024 as *mut u32;
     const UART_CLK_PODF_OFFSET: u32 = 0;
     const UART_CLK_PODF_MASK: u32 = 0x3F << UART_CLK_PODF_OFFSET;

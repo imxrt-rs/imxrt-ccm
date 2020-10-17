@@ -35,7 +35,7 @@ impl Disabled<PerClock> {
     /// Enable the periodic clock root
     pub fn enable(self, _: &mut Handle) -> PerClock {
         unsafe {
-            enable();
+            configure();
         };
         self.0
     }
@@ -67,7 +67,7 @@ pub unsafe fn clock_gate_pit(gate: ClockGate) {
     set_clock_gate(CCGR_BASE.add(1), &[6], gate as u8);
 }
 
-/// Enable the periodic clock root
+/// Configure the periodic clock root
 ///
 /// # Safety
 ///
@@ -75,7 +75,7 @@ pub unsafe fn clock_gate_pit(gate: ClockGate) {
 /// the CCM. Consider using the [`PerClock`](struct.PerClock.html) for a
 /// safer interface.
 #[inline(always)]
-pub unsafe fn enable() {
+pub unsafe fn configure() {
     const CSCMR1: *mut u32 = 0x400F_C01C as *mut u32;
     const PERCLK_PODF_OFFSET: u32 = 0;
     const PERCLK_PODF_MASK: u32 = 0x1F << PERCLK_PODF_OFFSET;

@@ -13,7 +13,7 @@ const I2C_CLOCK_DIVIDER: u32 = 3;
 impl Disabled<I2CClock> {
     /// Enable the I2C clocks
     pub fn enable(self, _: &mut Handle) -> I2CClock {
-        unsafe { enable() };
+        unsafe { configure() };
         self.0
     }
 }
@@ -56,7 +56,7 @@ pub unsafe fn clock_gate(i2c: I2C, gate: ClockGate) {
     }
 }
 
-/// Enable the I2C clock root
+/// Configure the I2C clock root
 ///
 /// # Safety
 ///
@@ -64,7 +64,7 @@ pub unsafe fn clock_gate(i2c: I2C, gate: ClockGate) {
 /// the CCM. Consider using the [`I2CClock`](struct.I2CClock.html) for a
 /// safer interface.
 #[inline(always)]
-pub unsafe fn enable() {
+pub unsafe fn configure() {
     const CSCDR2: *mut u32 = 0x400F_C038 as *mut u32;
     const LPI2C_CLK_PODF_OFFSET: u32 = 19;
     const LPI2C_CLK_PODF_MASK: u32 = 0x3F << LPI2C_CLK_PODF_OFFSET;

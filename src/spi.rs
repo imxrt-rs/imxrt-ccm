@@ -9,7 +9,7 @@ const CLOCK_HZ: u32 = 528_000_000 / CLOCK_DIVIDER;
 impl Disabled<SPIClock> {
     /// Enable the SPI clocks
     pub fn enable(self, _: &mut Handle) -> SPIClock {
-        unsafe { enable() };
+        unsafe { configure() };
         self.0
     }
 }
@@ -54,7 +54,7 @@ pub unsafe fn clock_gate(spi: SPI, value: ClockGate) {
     set_clock_gate(ccgr, &[gate], value as u8);
 }
 
-/// Enable the SPI clock root
+/// Configure the SPI clock root
 ///
 /// # Safety
 ///
@@ -62,7 +62,7 @@ pub unsafe fn clock_gate(spi: SPI, value: ClockGate) {
 /// the CCM. Consider using the [`SPIClock`](struct.SPIClock.html) for a
 /// safer interface.
 #[inline(always)]
-pub unsafe fn enable() {
+pub unsafe fn configure() {
     const CBCMR: *mut u32 = 0x400F_C018 as *mut u32;
     const LPSPI_PODF_OFFSET: u32 = 26;
     const LPSPI_PODF_MASK: u32 = 0xF << LPSPI_PODF_OFFSET;

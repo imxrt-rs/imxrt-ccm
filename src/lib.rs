@@ -13,10 +13,10 @@ mod uart;
 ))]
 mod ral;
 
-pub use i2c::{clock_gate as clock_gate_i2c, enable as enable_i2c, I2C};
-pub use perclock::{clock_gate_gpt, clock_gate_pit, enable as enable_perclock, GPT, PIT};
-pub use spi::{clock_gate as clock_gate_spi, enable as enable_spi, SPI};
-pub use uart::{clock_gate as clock_gate_uart, enable as enable_uart, UART};
+pub use i2c::{clock_gate as clock_gate_i2c, configure as configure_i2c, I2C};
+pub use perclock::{clock_gate_gpt, clock_gate_pit, configure as configure_perclock, GPT, PIT};
+pub use spi::{clock_gate as clock_gate_spi, configure as configure_spi, SPI};
+pub use uart::{clock_gate as clock_gate_uart, configure as configure_uart, UART};
 
 /// A peripheral instance whose clock can be gated
 ///
