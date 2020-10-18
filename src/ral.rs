@@ -47,6 +47,17 @@ unsafe impl Instance for ral::dma0::Instance {
     }
 }
 
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::dma0::DMA0;
+///
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// handle.clock_gate_dma(&mut DMA0::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct DMAClockGate;
+
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that LPI2C instances are correct");
 unsafe impl Instance for ral::lpi2c::Instance {
@@ -74,6 +85,18 @@ unsafe impl Instance for ral::lpi2c::Instance {
     }
 }
 
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::lpi2c::LPI2C2;
+///
+/// let CCM{ mut handle, i2c_clock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let mut i2c_clock = i2c_clock.enable(&mut handle);
+/// i2c_clock.clock_gate(&mut LPI2C2::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct I2CClockGate;
+
 unsafe impl Instance for ral::gpt::Instance {
     type Inst = GPT;
     fn instance(&self) -> GPT {
@@ -91,6 +114,18 @@ unsafe impl Instance for ral::gpt::Instance {
     }
 }
 
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::gpt::GPT2;
+///
+/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let mut perclock = perclock.enable(&mut handle);
+/// perclock.clock_gate_gpt(&mut GPT2::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct GPTClockGate;
+
 unsafe impl Instance for ral::pit::Instance {
     type Inst = PIT;
     fn instance(&self) -> PIT {
@@ -100,6 +135,18 @@ unsafe impl Instance for ral::pit::Instance {
         true
     }
 }
+
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::pit::PIT;
+///
+/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let mut perclock = perclock.enable(&mut handle);
+/// perclock.clock_gate_pit(&mut PIT::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct PITClockGate;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that LPSPI instances are correct");
@@ -126,6 +173,18 @@ unsafe impl Instance for ral::lpspi::Instance {
         }
     }
 }
+
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::lpspi::LPSPI1;
+///
+/// let CCM{ mut handle, spi_clock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let mut spi_clock = spi_clock.enable(&mut handle);
+/// spi_clock.clock_gate(&mut LPSPI1::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct SPIClockGate;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that LPUART instances are correct");
@@ -159,6 +218,18 @@ unsafe impl Instance for ral::lpuart::Instance {
     }
 }
 
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::lpuart::LPUART4;
+///
+/// let CCM{ mut handle, uart_clock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let mut uart_clock = uart_clock.enable(&mut handle);
+/// uart_clock.clock_gate(&mut LPUART4::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct UARTClockGate;
+
 #[cfg(feature = "imxrt1060")]
 use ral::adc;
 #[cfg(feature = "imxrt1010")]
@@ -186,6 +257,20 @@ unsafe impl Instance for adc::Instance {
         }
     }
 }
+
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// #[cfg(feature = "imxrt1060")]
+/// use imxrt_ral::adc::ADC1;
+/// #[cfg(feature = "imxrt1010")]
+/// use imxrt_ral::adc1::ADC1;
+///
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// handle.clock_gate_adc(&mut ADC1::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct ADCClockGate;
 
 #[cfg(feature = "imxrt1060")]
 use ral::pwm;
@@ -218,3 +303,17 @@ unsafe impl Instance for pwm::Instance {
         }
     }
 }
+
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// #[cfg(feature = "imxrt1060")]
+/// use imxrt_ral::pwm::PWM1;
+/// #[cfg(feature = "imxrt1010")]
+/// use imxrt_ral::pwm1::PWM1;
+///
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// handle.clock_gate_pwm(&mut PWM1::take().unwrap(), ClockGate::On);
+/// ```
+#[cfg(doctest)]
+struct PWMClockGate;
