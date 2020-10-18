@@ -12,6 +12,7 @@ impl<S> Disabled<SPIClock<S>> {
     /// When `enable` returns, all SPI clock gates will be set to off.
     /// Use [`clock_gate`](struct.SPIClock.html#method.clock_gate)
     /// to turn on SPI clock gates.
+    #[inline(always)]
     pub fn enable(self, _: &mut Handle) -> SPIClock<S>
     where
         S: Instance<Inst = SPI>,
@@ -39,6 +40,7 @@ pub enum SPI {
 
 impl<S> SPIClock<S> {
     /// Set the clock gate for the SPI instance
+    #[inline(always)]
     pub fn clock_gate(&mut self, spi: &mut S, gate: ClockGate)
     where
         S: Instance<Inst = SPI>,
@@ -54,6 +56,7 @@ impl<S> SPIClock<S> {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the [`SPIClock`](struct.SPIClock.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate<S: Instance<Inst = SPI>>(spi: SPI, value: ClockGate) {
     let gate = match super::check_instance::<S>(spi) {
         Some(SPI::SPI1) => 0,

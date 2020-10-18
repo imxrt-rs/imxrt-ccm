@@ -40,9 +40,11 @@ impl CCM {
 
 unsafe impl Instance for ral::dma0::Instance {
     type Inst = DMA;
+    #[inline(always)]
     fn instance(&self) -> DMA {
         DMA
     }
+    #[inline(always)]
     fn is_valid(_: DMA) -> bool {
         true
     }
@@ -73,6 +75,7 @@ struct DMAClockGate;
 compile_error!("Ensure that LPI2C instances are correct");
 unsafe impl Instance for ral::lpi2c::Instance {
     type Inst = I2C;
+    #[inline(always)]
     fn instance(&self) -> I2C {
         match &**self as *const _ {
             ral::lpi2c::LPI2C1 => I2C::I2C1,
@@ -85,6 +88,7 @@ unsafe impl Instance for ral::lpi2c::Instance {
         }
     }
 
+    #[inline(always)]
     fn is_valid(i2c: I2C) -> bool {
         #[allow(unreachable_patterns)]
         match i2c {
@@ -120,6 +124,7 @@ struct I2CClockGate;
 
 unsafe impl Instance for ral::gpt::Instance {
     type Inst = GPT;
+    #[inline(always)]
     fn instance(&self) -> GPT {
         match &**self as *const _ {
             ral::gpt::GPT1 => GPT::GPT1,
@@ -128,6 +133,7 @@ unsafe impl Instance for ral::gpt::Instance {
         }
     }
 
+    #[inline(always)]
     fn is_valid(gpt: GPT) -> bool {
         match gpt {
             GPT::GPT1 | GPT::GPT2 => true,
@@ -159,9 +165,11 @@ struct GPTClockGate;
 
 unsafe impl Instance for ral::pit::Instance {
     type Inst = PIT;
+    #[inline(always)]
     fn instance(&self) -> PIT {
         PIT
     }
+    #[inline(always)]
     fn is_valid(_: PIT) -> bool {
         true
     }
@@ -193,6 +201,7 @@ struct PITClockGate;
 compile_error!("Ensure that LPSPI instances are correct");
 unsafe impl Instance for ral::lpspi::Instance {
     type Inst = SPI;
+    #[inline(always)]
     fn instance(&self) -> SPI {
         match &**self as *const _ {
             ral::lpspi::LPSPI1 => SPI::SPI1,
@@ -204,6 +213,7 @@ unsafe impl Instance for ral::lpspi::Instance {
             _ => unreachable!(),
         }
     }
+    #[inline(always)]
     fn is_valid(spi: SPI) -> bool {
         #[allow(unreachable_patterns)]
         match spi {
@@ -241,6 +251,7 @@ struct SPIClockGate;
 compile_error!("Ensure that LPUART instances are correct");
 unsafe impl Instance for ral::lpuart::Instance {
     type Inst = UART;
+    #[inline(always)]
     fn instance(&self) -> UART {
         match &**self as *const _ {
             ral::lpuart::LPUART1 => UART::UART1,
@@ -258,6 +269,7 @@ unsafe impl Instance for ral::lpuart::Instance {
             _ => unreachable!(),
         }
     }
+    #[inline(always)]
     fn is_valid(uart: UART) -> bool {
         #[allow(unreachable_patterns)]
         match uart {
@@ -300,6 +312,7 @@ use ral::adc1 as adc;
 compile_error!("Ensure that ADC instances are correct");
 unsafe impl Instance for adc::Instance {
     type Inst = ADC;
+    #[inline(always)]
     fn instance(&self) -> ADC {
         match &**self as *const _ {
             adc::ADC1 => ADC::ADC1,
@@ -308,6 +321,7 @@ unsafe impl Instance for adc::Instance {
             _ => unreachable!(),
         }
     }
+    #[inline(always)]
     fn is_valid(adc: ADC) -> bool {
         #[allow(unreachable_patterns)]
         match adc {
@@ -352,6 +366,7 @@ use ral::pwm1 as pwm;
 compile_error!("Ensure that PWM instances are correct");
 unsafe impl Instance for pwm::Instance {
     type Inst = PWM;
+    #[inline(always)]
     fn instance(&self) -> PWM {
         match &**self as *const _ {
             pwm::PWM1 => PWM::PWM1,
@@ -364,6 +379,7 @@ unsafe impl Instance for pwm::Instance {
             _ => unreachable!(),
         }
     }
+    #[inline(always)]
     fn is_valid(pwm: PWM) -> bool {
         #[allow(unreachable_patterns)]
         match pwm {

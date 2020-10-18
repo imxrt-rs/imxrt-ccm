@@ -11,6 +11,7 @@ impl<U> Disabled<UARTClock<U>> {
     /// When `enable` returns, all UART clock gates will be set to off.
     /// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)
     /// to turn on UART clock gates.
+    #[inline(always)]
     pub fn enable(self, _: &mut Handle) -> UARTClock<U>
     where
         U: Instance<Inst = UART>,
@@ -46,6 +47,7 @@ pub enum UART {
 
 impl<U> UARTClock<U> {
     /// Set the clock gate for the UART instance
+    #[inline(always)]
     pub fn clock_gate(&mut self, uart: &mut U, gate: ClockGate)
     where
         U: Instance<Inst = UART>,
@@ -61,6 +63,7 @@ impl<U> UARTClock<U> {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the [`UARTClock`](struct.UARTClock.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate<U: Instance<Inst = UART>>(uart: UART, gate: ClockGate) {
     let value = gate as u8;
     match super::check_instance::<U>(uart) {

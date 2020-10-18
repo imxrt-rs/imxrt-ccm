@@ -13,6 +13,7 @@ impl<I> Disabled<I2CClock<I>> {
     /// When `enable` returns, all I2C clock gates will be set to off.
     /// Use [`clock_gate`](struct.I2CClock.html#method.clock_gate)
     /// to turn on I2C clock gates.
+    #[inline(always)]
     pub fn enable(self, _: &mut Handle) -> I2CClock<I>
     where
         I: Instance<Inst = I2C>,
@@ -40,6 +41,7 @@ pub enum I2C {
 
 impl<I> I2CClock<I> {
     /// Set the clock gate gate for the I2C instance
+    #[inline(always)]
     pub fn clock_gate(&mut self, i2c: &mut I, gate: ClockGate)
     where
         I: Instance<Inst = I2C>,
@@ -55,6 +57,7 @@ impl<I> I2CClock<I> {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the [`I2CClock`](struct.I2CClock.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate<I: Instance<Inst = I2C>>(i2c: I2C, gate: ClockGate) {
     let value = gate as u8;
     match super::check_instance::<I>(i2c) {

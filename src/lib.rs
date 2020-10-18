@@ -89,6 +89,7 @@ impl Handle {
     ///
     /// You should set the clock gate before creating DMA channels. Otherwise, the DMA
     /// peripheral may not work.
+    #[inline(always)]
     pub fn clock_gate_dma<D>(&mut self, _: &mut D, gate: ClockGate)
     where
         D: Instance<Inst = DMA>,
@@ -97,6 +98,7 @@ impl Handle {
     }
 
     /// Set the clock gate for the ADC peripheral
+    #[inline(always)]
     pub fn clock_gate_adc<A>(&mut self, adc: &mut A, gate: ClockGate)
     where
         A: Instance<Inst = ADC>,
@@ -105,6 +107,7 @@ impl Handle {
     }
 
     /// Set the clock gate for the PWM peripheral
+    #[inline(always)]
     pub fn clock_gate_pwm<P>(&mut self, pwm: &mut P, gate: ClockGate)
     where
         P: Instance<Inst = PWM>,
@@ -120,6 +123,7 @@ impl Handle {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate_dma<D: Instance<Inst = DMA>>(gate: ClockGate) {
     set_clock_gate(CCGR_BASE.add(5), &[3], gate as u8);
 }
@@ -131,6 +135,7 @@ pub unsafe fn clock_gate_dma<D: Instance<Inst = DMA>>(gate: ClockGate) {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate_adc<A: Instance<Inst = ADC>>(adc: ADC, gate: ClockGate) {
     match check_instance::<A>(adc) {
         Some(ADC::ADC1) => set_clock_gate(CCGR_BASE.add(1), &[8], gate as u8),
@@ -146,6 +151,7 @@ pub unsafe fn clock_gate_adc<A: Instance<Inst = ADC>>(adc: ADC, gate: ClockGate)
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate_pwm<P: Instance<Inst = PWM>>(pwm: PWM, gate: ClockGate) {
     match check_instance::<P>(pwm) {
         Some(PWM::PWM1) => set_clock_gate(CCGR_BASE.add(4), &[8], gate as u8),
@@ -294,7 +300,6 @@ impl<I> I2CClock<I> {
 }
 
 /// Starting address of the clock control gate registers
-#[allow(unused)] // Used when features are enabled
 const CCGR_BASE: *mut u32 = 0x400F_C068 as *mut u32;
 
 /// # Safety

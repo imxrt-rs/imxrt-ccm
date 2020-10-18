@@ -21,6 +21,7 @@ const PERIODIC_CLOCK_DIVIDER: u32 = 24;
 
 impl<P, G> PerClock<P, G> {
     /// Set the clock gate for the GPT
+    #[inline(always)]
     pub fn clock_gate_gpt(&mut self, gpt: &mut G, gate: ClockGate)
     where
         G: Instance<Inst = GPT>,
@@ -28,6 +29,7 @@ impl<P, G> PerClock<P, G> {
         unsafe { clock_gate_gpt::<G>(gpt.instance(), gate) };
     }
     /// Set the clock gate for the PIT
+    #[inline(always)]
     pub fn clock_gate_pit(&mut self, _: &mut P, gate: ClockGate)
     where
         P: Instance<Inst = PIT>,
@@ -41,6 +43,7 @@ impl<P, G> Disabled<PerClock<P, G>> {
     ///
     /// When `enable` returns, all GPT and PIT clock gates will be set to off. To
     /// re-enable clock gates, use the clock gate methods on [`PerClock`](struct.PerClock.html).
+    #[inline(always)]
     pub fn enable(self, _: &mut Handle) -> PerClock<P, G>
     where
         P: Instance<Inst = PIT>,
@@ -63,6 +66,7 @@ impl<P, G> Disabled<PerClock<P, G>> {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the [`PerClock`](struct.PerClock.html) for a
 /// safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate_gpt<G: Instance<Inst = GPT>>(gpt: GPT, gate: ClockGate) {
     let value = gate as u8;
     match super::check_instance::<G>(gpt) {
@@ -79,6 +83,7 @@ pub unsafe fn clock_gate_gpt<G: Instance<Inst = GPT>>(gpt: GPT, gate: ClockGate)
 /// This could be used by anyone who supplies a PIT register block, which is globally
 /// available. Consider using [`PerClock::clock_gate_pit`](struct.PerClock.html#method.clock_gate_pit)
 /// for a safer interface.
+#[inline(always)]
 pub unsafe fn clock_gate_pit<P: Instance<Inst = PIT>>(gate: ClockGate) {
     set_clock_gate(CCGR_BASE.add(1), &[6], gate as u8);
 }
