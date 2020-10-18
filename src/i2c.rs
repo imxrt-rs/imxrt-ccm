@@ -2,11 +2,8 @@
 
 use super::{set_clock_gate, ClockGate, Disabled, Handle, I2CClock, Instance, CCGR_BASE};
 
-/// I2C peripheral clock frequency
-///
-/// If changing the root clock in `enable`, you'll need to update
-/// this value.
-const I2C_CLOCK_HZ: u32 = crate::OSCILLATOR_FREQUENCY_HZ / I2C_CLOCK_DIVIDER;
+/// I2C clock frequency (Hz)
+pub const CLOCK_FREQUENCY_HZ: u32 = crate::OSCILLATOR_FREQUENCY_HZ / I2C_CLOCK_DIVIDER;
 /// I2C peripheral clock divider
 const I2C_CLOCK_DIVIDER: u32 = 3;
 
@@ -48,11 +45,6 @@ impl<I> I2CClock<I> {
         I: Instance<Inst = I2C>,
     {
         unsafe { clock_gate::<I>(i2c.instance(), gate) }
-    }
-
-    /// Returns the I2C clock frequency (Hz)
-    pub const fn frequency() -> u32 {
-        I2C_CLOCK_HZ
     }
 }
 

@@ -2,6 +2,9 @@
 
 use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, UARTClock, CCGR_BASE};
 
+/// UART clock frequency (Hz)
+pub const CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ;
+
 impl<U> Disabled<UARTClock<U>> {
     /// Enable the UART clocks
     ///
@@ -48,11 +51,6 @@ impl<U> UARTClock<U> {
         U: Instance<Inst = UART>,
     {
         unsafe { clock_gate::<U>(uart.instance(), gate) }
-    }
-
-    /// Returns the UART clock frequency (Hz)
-    pub const fn frequency() -> u32 {
-        super::OSCILLATOR_FREQUENCY_HZ
     }
 }
 

@@ -3,8 +3,8 @@
 use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, SPIClock, CCGR_BASE};
 
 const CLOCK_DIVIDER: u32 = 5;
-/// If changing this, make sure to update `clock`
-const CLOCK_HZ: u32 = 528_000_000 / CLOCK_DIVIDER;
+/// SPI clock frequency (Hz)
+pub const CLOCK_FREQUENCY_HZ: u32 = 528_000_000 / CLOCK_DIVIDER;
 
 impl<S> Disabled<SPIClock<S>> {
     /// Enable the SPI clocks
@@ -44,11 +44,6 @@ impl<S> SPIClock<S> {
         S: Instance<Inst = SPI>,
     {
         unsafe { clock_gate::<S>(spi.instance(), gate) }
-    }
-
-    /// Returns the SPI clock frequency (Hz)
-    pub const fn frequency() -> u32 {
-        CLOCK_HZ
     }
 }
 

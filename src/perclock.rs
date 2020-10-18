@@ -13,7 +13,10 @@ pub enum GPT {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct PIT;
 
-const PERIODIC_CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ / PERIODIC_CLOCK_DIVIDER;
+/// Periodic clock frequency (Hz)
+///
+/// This may be further divided by internal GPT dividers.
+pub const CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ / PERIODIC_CLOCK_DIVIDER;
 const PERIODIC_CLOCK_DIVIDER: u32 = 24;
 
 impl<P, G> PerClock<P, G> {
@@ -30,10 +33,6 @@ impl<P, G> PerClock<P, G> {
         P: Instance<Inst = PIT>,
     {
         unsafe { clock_gate_pit::<P>(gate) };
-    }
-    /// Returns the periodic clock frequency (Hz)
-    pub const fn frequency() -> u32 {
-        PERIODIC_CLOCK_FREQUENCY_HZ
     }
 }
 
