@@ -11,7 +11,7 @@ mod uart;
     feature = "imxrt-ral",
     any(feature = "imxrt1010", feature = "imxrt1060")
 ))]
-mod ral;
+pub mod ral;
 
 pub use i2c::{clock_gate as clock_gate_i2c, configure as configure_i2c, I2C};
 pub use perclock::{clock_gate_gpt, clock_gate_pit, configure as configure_perclock, GPT, PIT};

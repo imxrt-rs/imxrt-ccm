@@ -1,11 +1,6 @@
-//! Instance implementations for the `imxrt-ral` crate
-//!
-//! # Safety
-//!
-//! We know all of these trait implementations to be safe,
-//! since we've studied the RAL and know its guarantees.
+//! Implementations for the imxrt-ral
 
-use crate::{Instance, ADC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
+use crate::{ClockGate, Instance, ADC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
 use imxrt_ral as ral;
 
 /// Helper for a clock control module designed to the
@@ -47,6 +42,16 @@ unsafe impl Instance for ral::dma0::Instance {
     }
 }
 
+/// Set the clock gate for the DMA controller
+///
+/// # Safety
+///
+/// See the general [`clock_gate_dma`](../fn.clock_gate_dma.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_dma(gate: ClockGate) {
+    super::clock_gate_dma::<ral::dma0::Instance>(gate);
+}
+
 /// ```no_run
 /// use imxrt_ccm::{CCM, ClockGate};
 /// use imxrt_ral::ccm;
@@ -85,6 +90,16 @@ unsafe impl Instance for ral::lpi2c::Instance {
     }
 }
 
+/// Set the clock gate for an I2C peripheral
+///
+/// # Safety
+///
+/// See the general [`clock_gate_i2c`](../fn.clock_gate_i2c.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_i2c(i2c: I2C, gate: ClockGate) {
+    super::clock_gate_i2c::<ral::lpi2c::Instance>(i2c, gate);
+}
+
 /// ```no_run
 /// use imxrt_ccm::{CCM, ClockGate};
 /// use imxrt_ral::ccm;
@@ -114,6 +129,16 @@ unsafe impl Instance for ral::gpt::Instance {
     }
 }
 
+/// Set the clock gate for a GPT
+///
+/// # Safety
+///
+/// See the general [`clock_gate_gpt`](../fn.clock_gate_gpt.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_gpt(gpt: GPT, gate: ClockGate) {
+    super::clock_gate_gpt::<ral::gpt::Instance>(gpt, gate);
+}
+
 /// ```no_run
 /// use imxrt_ccm::{CCM, ClockGate};
 /// use imxrt_ral::ccm;
@@ -134,6 +159,16 @@ unsafe impl Instance for ral::pit::Instance {
     fn is_valid(_: PIT) -> bool {
         true
     }
+}
+
+/// Set the clock gate for a PIT
+///
+/// # Safety
+///
+/// See the general [`clock_gate_pit`](../fn.clock_gate_pit.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_pit(gate: ClockGate) {
+    super::clock_gate_pit::<ral::pit::Instance>(gate);
 }
 
 /// ```no_run
@@ -172,6 +207,16 @@ unsafe impl Instance for ral::lpspi::Instance {
             _ => false,
         }
     }
+}
+
+/// Set the clock gate for a SPI peripheral
+///
+/// # Safety
+///
+/// See the general [`clock_gate_spi`](../fn.clock_gate_spi.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_spi(spi: SPI, gate: ClockGate) {
+    super::clock_gate_spi::<ral::lpspi::Instance>(spi, gate);
 }
 
 /// ```no_run
@@ -218,6 +263,16 @@ unsafe impl Instance for ral::lpuart::Instance {
     }
 }
 
+/// Set the clock gate for a UART peripheral
+///
+/// # Safety
+///
+/// See the general [`clock_gate_uart`](../fn.clock_gate_uart.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_uart(uart: UART, gate: ClockGate) {
+    super::clock_gate_uart::<ral::lpuart::Instance>(uart, gate);
+}
+
 /// ```no_run
 /// use imxrt_ccm::{CCM, ClockGate};
 /// use imxrt_ral::ccm;
@@ -256,6 +311,16 @@ unsafe impl Instance for adc::Instance {
             _ => false,
         }
     }
+}
+
+/// Set the clock gate for an ADC peripheral
+///
+/// # Safety
+///
+/// See the general [`clock_gate_adc`](../fn.clock_gate_adc.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_adc(adc: ADC, gate: ClockGate) {
+    super::clock_gate_adc::<adc::Instance>(adc, gate);
 }
 
 /// ```no_run
@@ -302,6 +367,16 @@ unsafe impl Instance for pwm::Instance {
             _ => false,
         }
     }
+}
+
+/// Set the clock gate for a PWM peripheral
+///
+/// # Safety
+///
+/// See the general [`clock_gate_pwm`](../fn.clock_gate_pwm.html) for safety concerns.
+#[inline(always)]
+pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
+    super::clock_gate_pwm::<pwm::Instance>(pwm, gate);
 }
 
 /// ```no_run
