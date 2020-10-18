@@ -156,19 +156,19 @@ pub struct CCM<P, G, U, S, I> {
     pub handle: Handle,
     /// The periodic clock handle
     ///
-    /// `perclock` is used for timers, including [`GPT`](../struct.GPT.html) and [`PIT`](../struct.PIT.html).
+    /// `perclock` is used for timers, including GPT and PIT timers
     pub perclock: Disabled<PerClock<P, G>>,
     /// The UART clock
     ///
-    /// `uart_clock` is for [`UART`](../struct.UART.html) peripherals.
+    /// `uart_clock` is for UART peripherals.
     pub uart_clock: Disabled<UARTClock<U>>,
     /// The SPI clock
     ///
-    /// `spi_clock` is for [`SPI`](../struct.SPI.html) peripherals.
+    /// `spi_clock` is for SPI peripherals.
     pub spi_clock: Disabled<SPIClock<S>>,
     /// The I2C clock
     ///
-    /// `i2c_clock` is for [`I2C`](../struct.I2C.html) peripherals.
+    /// `i2c_clock` is for I2C peripherals.
     pub i2c_clock: Disabled<I2CClock<I>>,
 }
 
