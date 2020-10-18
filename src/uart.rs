@@ -4,6 +4,10 @@ use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, UARTClock, CC
 
 impl<U> Disabled<UARTClock<U>> {
     /// Enable the UART clocks
+    ///
+    /// When `enable` returns, all UART clock gates will be set to off.
+    /// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)
+    /// to turn on UART clock gates.
     pub fn enable(self, _: &mut Handle) -> UARTClock<U>
     where
         U: Instance<Inst = UART>,

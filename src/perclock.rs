@@ -39,6 +39,9 @@ impl<P, G> PerClock<P, G> {
 
 impl<P, G> Disabled<PerClock<P, G>> {
     /// Enable the periodic clock root
+    ///
+    /// When `enable` returns, all GPT and PIT clock gates will be set to off. To
+    /// re-enable clock gates, use the clock gate methods on [`PerClock`](struct.PerClock.html).
     pub fn enable(self, _: &mut Handle) -> PerClock<P, G>
     where
         P: Instance<Inst = PIT>,

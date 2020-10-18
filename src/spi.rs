@@ -8,6 +8,10 @@ const CLOCK_HZ: u32 = 528_000_000 / CLOCK_DIVIDER;
 
 impl<S> Disabled<SPIClock<S>> {
     /// Enable the SPI clocks
+    ///
+    /// When `enable` returns, all SPI clock gates will be set to off.
+    /// Use [`clock_gate`](struct.SPIClock.html#method.clock_gate)
+    /// to turn on SPI clock gates.
     pub fn enable(self, _: &mut Handle) -> SPIClock<S>
     where
         S: Instance<Inst = SPI>,

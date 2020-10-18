@@ -12,6 +12,10 @@ const I2C_CLOCK_DIVIDER: u32 = 3;
 
 impl<I> Disabled<I2CClock<I>> {
     /// Enable the I2C clocks
+    ///
+    /// When `enable` returns, all I2C clock gates will be set to off.
+    /// Use [`clock_gate`](struct.I2CClock.html#method.clock_gate)
+    /// to turn on I2C clock gates.
     pub fn enable(self, _: &mut Handle) -> I2CClock<I>
     where
         I: Instance<Inst = I2C>,
