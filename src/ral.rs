@@ -19,6 +19,11 @@ pub type CCM = crate::CCM<
     ral::lpi2c::Instance,
 >;
 
+pub type PerClock = crate::PerClock<ral::pit::Instance, ral::gpt::Instance>;
+pub type UARTClock = crate::UARTClock<ral::lpuart::Instance>;
+pub type SPIClock = crate::SPIClock<ral::lpspi::Instance>;
+pub type I2CClock = crate::I2CClock<ral::lpi2c::Instance>;
+
 impl CCM {
     /// Converts the `imxrt-ral` CCM instance into the `CCM` driver
     ///
