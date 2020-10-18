@@ -81,7 +81,7 @@ impl Handle {
     where
         D: Instance<Inst = DMA>,
     {
-        unsafe { clock_gate_dma(gate) };
+        unsafe { clock_gate_dma::<D>(gate) };
     }
 
     /// Set the clock gate for the ADC peripheral
@@ -89,7 +89,7 @@ impl Handle {
     where
         A: Instance<Inst = ADC>,
     {
-        unsafe { clock_gate_adc(adc.instance(), gate) }
+        unsafe { clock_gate_adc::<A>(adc.instance(), gate) }
     }
 
     /// Set the clock gate for the PWM peripheral
@@ -97,7 +97,7 @@ impl Handle {
     where
         P: Instance<Inst = PWM>,
     {
-        unsafe { clock_gate_pwm(pwm.instance(), gate) }
+        unsafe { clock_gate_pwm::<P>(pwm.instance(), gate) }
     }
 }
 
@@ -108,7 +108,7 @@ impl Handle {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
 /// safer interface.
-pub unsafe fn clock_gate_dma(gate: ClockGate) {
+pub unsafe fn clock_gate_dma<D: Instance<Inst = DMA>>(gate: ClockGate) {
     set_clock_gate(CCGR_BASE.add(5), &[3], gate as u8);
 }
 
@@ -119,10 +119,11 @@ pub unsafe fn clock_gate_dma(gate: ClockGate) {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
 /// safer interface.
-pub unsafe fn clock_gate_adc(adc: ADC, gate: ClockGate) {
-    match adc {
-        ADC::ADC1 => set_clock_gate(CCGR_BASE.add(1), &[8], gate as u8),
-        ADC::ADC2 => set_clock_gate(CCGR_BASE.add(1), &[4], gate as u8),
+pub unsafe fn clock_gate_adc<A: Instance<Inst = ADC>>(adc: ADC, gate: ClockGate) {
+    match check_instance::<A>(adc) {
+        Some(ADC::ADC1) => set_clock_gate(CCGR_BASE.add(1), &[8], gate as u8),
+        Some(ADC::ADC2) => set_clock_gate(CCGR_BASE.add(1), &[4], gate as u8),
+        _ => (),
     }
 }
 
@@ -133,12 +134,13 @@ pub unsafe fn clock_gate_adc(adc: ADC, gate: ClockGate) {
 /// This could be called anywhere, modifying global memory that's owned by
 /// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
 /// safer interface.
-pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
-    match pwm {
-        PWM::PWM1 => set_clock_gate(CCGR_BASE.add(4), &[8], gate as u8),
-        PWM::PWM2 => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
-        PWM::PWM3 => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
-        PWM::PWM4 => set_clock_gate(CCGR_BASE.add(4), &[10], gate as u8),
+pub unsafe fn clock_gate_pwm<P: Instance<Inst = PWM>>(pwm: PWM, gate: ClockGate) {
+    match check_instance::<P>(pwm) {
+        Some(PWM::PWM1) => set_clock_gate(CCGR_BASE.add(4), &[8], gate as u8),
+        Some(PWM::PWM2) => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
+        Some(PWM::PWM3) => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
+        Some(PWM::PWM4) => set_clock_gate(CCGR_BASE.add(4), &[10], gate as u8),
+        _ => (),
     }
 }
 
