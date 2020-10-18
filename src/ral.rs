@@ -1,4 +1,10 @@
 //! Implementations for the imxrt-ral
+//!
+//! Use [`CCM::from_ral_ccm`](../struct.CCM.html#from_ral_ccm) to safely
+//! acquire the CCM handle and clock roots.
+//!
+//! The functions in this module are the same as the `clock_gate_*` functions
+//! in the library root, but they inline the RAL instance.
 
 use crate::{ClockGate, Instance, ADC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
 use imxrt_ral as ral;
@@ -25,7 +31,7 @@ impl CCM {
     ///
     /// let ccm = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
     /// ```
-    pub fn from_ral_ccm(_: ral::ccm::Instance) -> Self {
+    pub const fn from_ral_ccm(_: ral::ccm::Instance) -> Self {
         // Safety: we "own" the CCM instance, so no one
         // else can (safely) access it.
         unsafe { crate::CCM::new() }
