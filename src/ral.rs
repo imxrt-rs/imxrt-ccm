@@ -8,7 +8,17 @@
 use crate::{Instance, ADC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
 use imxrt_ral as ral;
 
-impl crate::CCM<ral::lpuart::Instance, ral::lpspi::Instance, ral::lpi2c::Instance> {
+/// Helper for a clock control module designed to the
+/// RAL interface.
+pub type CCM = crate::CCM<
+    ral::pit::Instance,
+    ral::gpt::Instance,
+    ral::lpuart::Instance,
+    ral::lpspi::Instance,
+    ral::lpi2c::Instance,
+>;
+
+impl CCM {
     /// Converts the `imxrt-ral` CCM instance into the `CCM` driver
     ///
     /// This is safer than using `new()`, since we take ownership of the
