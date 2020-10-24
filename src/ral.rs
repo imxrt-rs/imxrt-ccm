@@ -1,6 +1,6 @@
 //! Implementations for the imxrt-ral
 //!
-//! Use [`CCM::from_ral_ccm`](../struct.CCM.html#from_ral_ccm) to safely
+//! Use [`CCM::from_ral`](../struct.CCM.html#from_ral) to safely
 //! acquire the CCM handle and clock roots.
 //!
 //! The functions in this module are the same as the `clock_gate_*` functions
@@ -34,9 +34,9 @@ impl CCM {
     /// use imxrt_ccm::CCM;
     /// use imxrt_ral::ccm;
     ///
-    /// let ccm = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+    /// let ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
     /// ```
-    pub const fn from_ral_ccm(_: ral::ccm::Instance) -> Self {
+    pub const fn from_ral(_: ral::ccm::Instance) -> Self {
         // Safety: we "own" the CCM instance, so no one
         // else can (safely) access it.
         unsafe { crate::CCM::new() }
@@ -70,7 +70,7 @@ pub unsafe fn clock_gate_dma(gate: ClockGate) {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::dma0::DMA0;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// handle.clock_gate_dma(&mut DMA0::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
@@ -120,7 +120,7 @@ pub unsafe fn clock_gate_i2c(i2c: I2C, gate: ClockGate) {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::lpi2c::LPI2C2;
 ///
-/// let CCM{ mut handle, i2c_clock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, i2c_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut i2c_clock = i2c_clock.enable(&mut handle);
 /// i2c_clock.clock_gate(&mut LPI2C2::take().unwrap(), ClockGate::On);
 /// ```
@@ -161,7 +161,7 @@ pub unsafe fn clock_gate_gpt(gpt: GPT, gate: ClockGate) {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::gpt::GPT2;
 ///
-/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut perclock = perclock.enable(&mut handle);
 /// perclock.clock_gate_gpt(&mut GPT2::take().unwrap(), ClockGate::On);
 /// ```
@@ -195,7 +195,7 @@ pub unsafe fn clock_gate_pit(gate: ClockGate) {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::pit::PIT;
 ///
-/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut perclock = perclock.enable(&mut handle);
 /// perclock.clock_gate_pit(&mut PIT::take().unwrap(), ClockGate::On);
 /// ```
@@ -245,7 +245,7 @@ pub unsafe fn clock_gate_spi(spi: SPI, gate: ClockGate) {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::lpspi::LPSPI1;
 ///
-/// let CCM{ mut handle, spi_clock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, spi_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut spi_clock = spi_clock.enable(&mut handle);
 /// spi_clock.clock_gate(&mut LPSPI1::take().unwrap(), ClockGate::On);
 /// ```
@@ -301,7 +301,7 @@ pub unsafe fn clock_gate_uart(uart: UART, gate: ClockGate) {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::lpuart::LPUART4;
 ///
-/// let CCM{ mut handle, uart_clock, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, uart_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut uart_clock = uart_clock.enable(&mut handle);
 /// uart_clock.clock_gate(&mut LPUART4::take().unwrap(), ClockGate::On);
 /// ```
@@ -356,7 +356,7 @@ pub unsafe fn clock_gate_adc(adc: ADC, gate: ClockGate) {
 /// #[cfg(feature = "imxrt1010")]
 /// use imxrt_ral::adc1::ADC1;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// handle.clock_gate_adc(&mut ADC1::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
@@ -414,7 +414,7 @@ pub unsafe fn clock_gate_pwm(pwm: PWM, gate: ClockGate) {
 /// #[cfg(feature = "imxrt1010")]
 /// use imxrt_ral::pwm1::PWM1;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral_ccm).unwrap();
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// handle.clock_gate_pwm(&mut PWM1::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
