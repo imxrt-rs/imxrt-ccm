@@ -19,9 +19,13 @@ pub type CCM = crate::CCM<
     ral::lpi2c::Instance,
 >;
 
+/// A periodic clock that controls RAL PIT and GPT timings
 pub type PerClock = crate::PerClock<ral::pit::Instance, ral::gpt::Instance>;
+/// A UART clock that controls RAL LPUART timing
 pub type UARTClock = crate::UARTClock<ral::lpuart::Instance>;
+/// A SPI clock that controls RAL LPSPI timing
 pub type SPIClock = crate::SPIClock<ral::lpspi::Instance>;
+/// An I2C clock that contorls RAL LPI2C timing
 pub type I2CClock = crate::I2CClock<ral::lpi2c::Instance>;
 
 impl CCM {
