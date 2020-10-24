@@ -71,6 +71,9 @@ pub unsafe fn clock_gate<I: Instance<Inst = I2C>>(i2c: I2C, gate: ClockGate) {
 
 /// Configure the I2C clock root
 ///
+/// Configure will **not** disable peripheral clock gates. You should disable
+/// clock gates yourself before calling this function.
+///
 /// # Safety
 ///
 /// This could be called anywhere, modifying global memory that's owned by

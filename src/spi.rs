@@ -71,6 +71,9 @@ pub unsafe fn clock_gate<S: Instance<Inst = SPI>>(spi: SPI, value: ClockGate) {
 
 /// Configure the SPI clock root
 ///
+/// Configure will **not** disable peripheral clock gates. You should disable
+/// clock gates yourself before calling this function.
+///
 /// # Safety
 ///
 /// This could be called anywhere, modifying global memory that's owned by
