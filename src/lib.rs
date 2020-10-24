@@ -19,7 +19,7 @@ pub use i2c::{
 };
 pub use perclock::{
     clock_gate_gpt, clock_gate_pit, configure as configure_perclock,
-    CLOCK_FREQUENCY_HZ as PERCLOCK_FREQUENCY_HZ, GPT, PIT,
+    CLOCK_FREQUENCY_HZ as PERCLOCK_CLOCK_FREQUENCY_HZ, GPT, PIT,
 };
 pub use spi::{
     clock_gate as clock_gate_spi, configure as configure_spi,
@@ -234,8 +234,9 @@ pub struct Disabled<Clock>(Clock);
 
 /// The periodic clock root
 ///
-/// `PerClock` is the input clock for GPT and PIT. It runs at
-/// 1MHz.
+/// `PerClock` is the input clock for GPT and PIT.
+/// See [`PERCLOCK_CLOCK_FREQUENCY_HZ`](constant.PERCLOCK_CLOCK_FREQUENCY_HZ.html)
+/// for its constant value.
 pub struct PerClock<P, G>(PhantomData<(P, G)>);
 
 impl<P, G> PerClock<P, G> {
@@ -252,6 +253,10 @@ impl<P, G> PerClock<P, G> {
 }
 
 /// The UART clock
+///
+/// The UART clock is based on the crystal oscillator. See
+/// [`UART_CLOCK_FREQUENCY_HZ`](constant.UART_CLOCK_FREQUENCY_HZ.html) for its
+/// constant value.
 pub struct UARTClock<C>(PhantomData<C>);
 
 impl<C> UARTClock<C> {
@@ -268,6 +273,10 @@ impl<C> UARTClock<C> {
 }
 
 /// The SPI clock
+///
+/// The SPI clock is based on the crystal oscillator. See
+/// [`SPI_CLOCK_FREQUENCY_HZ`](constant.SPI_CLOCK_FREQUENCY_HZ.html) for its
+/// constant value.
 pub struct SPIClock<S>(PhantomData<S>);
 
 impl<S> SPIClock<S> {
@@ -284,6 +293,10 @@ impl<S> SPIClock<S> {
 }
 
 /// The I2C clock
+///
+/// The I2C clock is based on the crystal oscillator. See
+/// [`I2C_CLOCK_FREQUENCY_HZ`](constant.I2C_CLOCK_FREQUENCY_HZ.html) for its
+/// constant value.
 pub struct I2CClock<I>(PhantomData<I>);
 
 impl<I> I2CClock<I> {
