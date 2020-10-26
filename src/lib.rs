@@ -1,4 +1,156 @@
-//! i.MX RT Clock Control Module (CCM)
+//! Clock Control Module (CCM) driver for i.MX RT systems
+//!
+//! `imxrt-ccm` supports peripheral clock gating, root clock configuration, and other clock
+//! management features for i.MX RT processors. It is a lower-level driver, targeted for
+//! HAL implementers. We encourage you to re-export `imxrt-ccm` APIs in your larger libraries.
+//!
+//! The rest of this documentation is for HAL implementers, or users who want to create higher-level
+//! abstractions which require CCM configuration. HAL users who are using re-exported `imxrt-ccm` APIs
+//! should consult their HAL documentation for more information on clock configuration.
+//!
+//! # Usage
+//!
+//! Implement [`Instance`](trait.Instance.html) on peripheral instances. It's your decision on what
+//! qualifies as a "peripeheral instance." It could be a type that could represent the register block,
+//! or MMIO. Or, it could represent your peripheral driver.
+//!
+//! This CCM driver supports clock gating for a variety of peripherals; look for "peripheral instance"
+//! in documentation. You should encapsulate any chip-specific details in the `Instance` implementation.
+//!
+//! Then, create a safe wrapper around [`CCM::new`](struct.CCM.html#method.new) so that your users
+//! can safely acquire the CCM peripheral. Your API must ensure that there is only one CCM instance.
+//! The types wrapped by your CCM clocks should reflect your `Instance` implementations.
+//!
+//! Here's an example of implementing a I2C `Instance` for compatibility with the I2C clock. The example
+//! shows how you might include support for the two extra I2C peripherals that are available on a 1060
+//! chip family.
+//!
+//! ```no_run
+//! use imxrt_ccm as ccm;
+//!
+//! /// Our I2C instance
+//! struct I2C {
+//!     instance_id: usize,
+//!     // Other members...
+//! }
+//!
+//! unsafe impl ccm::Instance for I2C {
+//!     type Inst = ccm::I2C;
+//!     fn instance(&self) -> Self::Inst {
+//!         match self.instance_id {
+//!             1 => ccm::I2C::I2C1,
+//!             2 => ccm::I2C::I2C2,
+//!             #[cfg(feature = "imxrt1060")]
+//!             3 => ccm::I2C::I2C3,
+//!             #[cfg(feature = "imxrt1060")]
+//!             4 => ccm::I2C::I2C4,
+//!             _ => unreachable!()
+//!         }
+//!     }
+//!     fn is_valid(inst: Self::Inst) -> bool {
+//!         #[allow(unreachable_patterns)]
+//!         match inst {
+//!             ccm::I2C::I2C1 | ccm::I2C::I2C2 => true,
+//!             #[cfg(feature = "imxrt1060")]
+//!             ccm::I2C::I2C3 | ccm::I2C::I2C4 => true,
+//!             _ => false,
+//!         }
+//!     }
+//! }
+//!
+//! type CCM = ccm::CCM<
+//!     # (), (), (), (),
+//!     // Other clock types...
+//!     I2C
+//! >;
+//!
+//! fn take_ccm() -> Option<CCM> {
+//!   // TODO safety check that ensures
+//!   // CCM only taken once!
+//!   Some(unsafe { CCM::new() })
+//! }
+//!
+//! let CCM{ mut handle, i2c_clock, .. } = take_ccm().unwrap();
+//! // Enable the clock, which disables all clock gates
+//! let mut i2c_clock = i2c_clock.enable(&mut handle);
+//! ```
+//!
+//! We recommend that you create driver initialization APIs that require clocks. By requiring an immutable
+//! receiver for constructing a peripheral, you guarantee that a user has configured the peripheral
+//! clock.
+//!
+//! ```no_run
+//! # use imxrt_ccm as ccm;
+//! #
+//! # /// Our I2C instance
+//! # struct I2C {
+//! #     instance_id: usize,
+//! #     // Other members...
+//! # }
+//! #
+//! # unsafe impl ccm::Instance for I2C {
+//! #     type Inst = ccm::I2C;
+//! #     fn instance(&self) -> Self::Inst {
+//! #         match self.instance_id {
+//! #             1 => ccm::I2C::I2C1,
+//! #             2 => ccm::I2C::I2C2,
+//! #             #[cfg(feature = "imxrt1060")]
+//! #             3 => ccm::I2C::I2C3,
+//! #             #[cfg(feature = "imxrt1060")]
+//! #             4 => ccm::I2C::I2C4,
+//! #             _ => unreachable!()
+//! #         }
+//! #     }
+//! #     fn is_valid(inst: Self::Inst) -> bool {
+//! #         #[allow(unreachable_patterns)]
+//! #         match inst {
+//! #             ccm::I2C::I2C1 | ccm::I2C::I2C2 => true,
+//! #             #[cfg(feature = "imxrt1060")]
+//! #             ccm::I2C::I2C3 | ccm::I2C::I2C4 => true,
+//! #             _ => false,
+//! #         }
+//! #     }
+//! # }
+//! struct I2CDriver {
+//!     inst: I2C,
+//!     // ...
+//! }
+//!
+//! impl I2CDriver {
+//!     pub fn new(inst: I2C, clock: &ccm::I2CClock<I2C>) -> I2CDriver {
+//!         // ...
+//!         I2CDriver {
+//!             inst,
+//!             // ...
+//!         }
+//!     }
+//! }
+//!
+//! let mut i2c3 = // Get I2C3 instance...
+//!     # I2C { instance_id: 3 };
+//! # let mut i2c_clock = unsafe { ccm::I2CClock::<I2C>::assume_enabled() };
+//! // Enable I2C3 clock gate
+//! i2c_clock.clock_gate(&mut i2c3, ccm::ClockGate::On);
+//! // Create the higher-level driver, requires the I2C clock
+//! let i2c = I2CDriver::new(i2c3, &i2c_clock);
+//! ```
+//!
+//! # `imxrt-ral` support
+//!
+//! `imxrt-ccm` provides support for `imxrt-ral`. The support includes `Instance` implementations on
+//! all supported `imxrt-ral` peripheral instances. The support also includes helper functions and types,
+//! which are exported in the `ral` module. Use the `imxrt-ral` support if your HAL already depends on
+//! the `imxrt-ral` crate.
+//!
+//! Enable the `imxrt-ral` feature. You must ensure that something else in your dependency graph enables the appropriate
+//! `imxrt-ral` feature for your processor. See the `imxrt-ral` documentation for more information.
+//!
+//! If you enable the `imxrt-ral` feature, you must also enable a chip feature. `imxrt-ccm` provides
+//! chip features that correlate to NXP datasheets and reference manuals. The list below describes the
+//! available features:
+//!
+//! - `"imxrt1010"` for i.MX RT 1010 processors, like iMXRT1011
+//! - `"imxrt1060"` for i.MX RT 1060 processors, like iMXRT1061 and iMXRT1062
 
 #![no_std]
 
@@ -7,10 +159,7 @@ mod perclock;
 mod spi;
 mod uart;
 
-#[cfg(all(
-    feature = "imxrt-ral",
-    any(feature = "imxrt1010", feature = "imxrt1060")
-))]
+#[cfg(feature = "imxrt-ral")]
 pub mod ral;
 
 pub use i2c::{
@@ -39,7 +188,7 @@ use core::marker::PhantomData;
 /// You should only implement `Instance` on a true i.MX RT peripheral instance.
 /// `Instance`s are only used when you have both a mutable reference to the instance,
 /// and a mutable reference to the CCM [`Handle`](struct.Handle.html). If you incorrectly
-/// implement `Instance`, you can violate the safety associted with accessing global,
+/// implement `Instance`, you can violate the safety associated with accessing global,
 /// mutable state.
 pub unsafe trait Instance {
     /// An identifier that describes the instance
