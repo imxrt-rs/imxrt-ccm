@@ -164,8 +164,7 @@ mod uart;
 pub mod ral;
 
 pub use i2c::{
-    clock_gate as clock_gate_i2c, configure as configure_i2c,
-    CLOCK_FREQUENCY_HZ as I2C_CLOCK_FREQUENCY_HZ, I2C,
+    clock_gate as clock_gate_i2c, configure as configure_i2c, frequency as frequency_i2c, I2C,
 };
 pub use perclock::{
     clock_gate_gpt, clock_gate_pit, configure as configure_perclock,
@@ -444,9 +443,7 @@ impl<S> SPIClock<S> {
 
 /// The I2C clock
 ///
-/// The I2C clock is based on the crystal oscillator. See
-/// [`I2C_CLOCK_FREQUENCY_HZ`](constant.I2C_CLOCK_FREQUENCY_HZ.html) for its
-/// constant value.
+/// The I2C clock is based on the crystal oscillator.
 pub struct I2CClock<I>(PhantomData<I>);
 
 impl<I> I2CClock<I> {
