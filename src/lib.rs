@@ -171,8 +171,7 @@ pub use perclock::{
     GPT, PIT,
 };
 pub use spi::{
-    clock_gate as clock_gate_spi, configure as configure_spi,
-    CLOCK_FREQUENCY_HZ as SPI_CLOCK_FREQUENCY_HZ, SPI,
+    clock_gate as clock_gate_spi, configure as configure_spi, frequency as frequency_spi, SPI,
 };
 pub use uart::{
     clock_gate as clock_gate_uart, configure as configure_uart,
@@ -421,9 +420,7 @@ impl<C> UARTClock<C> {
 
 /// The SPI clock
 ///
-/// The SPI clock is based on the crystal oscillator. See
-/// [`SPI_CLOCK_FREQUENCY_HZ`](constant.SPI_CLOCK_FREQUENCY_HZ.html) for its
-/// constant value.
+/// The SPI clock is based on the crystal oscillator.
 pub struct SPIClock<S>(PhantomData<S>);
 
 impl<S> SPIClock<S> {
