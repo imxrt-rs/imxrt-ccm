@@ -167,8 +167,8 @@ pub use i2c::{
     clock_gate as clock_gate_i2c, configure as configure_i2c, frequency as frequency_i2c, I2C,
 };
 pub use perclock::{
-    clock_gate_gpt, clock_gate_pit, configure as configure_perclock,
-    CLOCK_FREQUENCY_HZ as PERCLOCK_CLOCK_FREQUENCY_HZ, GPT, PIT,
+    clock_gate_gpt, clock_gate_pit, configure as configure_perclock, frequency as frequency_perclk,
+    GPT, PIT,
 };
 pub use spi::{
     clock_gate as clock_gate_spi, configure as configure_spi,
@@ -384,8 +384,6 @@ pub struct Disabled<Clock>(Clock);
 /// The periodic clock root
 ///
 /// `PerClock` is the input clock for GPT and PIT.
-/// See [`PERCLOCK_CLOCK_FREQUENCY_HZ`](constant.PERCLOCK_CLOCK_FREQUENCY_HZ.html)
-/// for its constant value.
 pub struct PerClock<P, G>(PhantomData<(P, G)>);
 
 impl<P, G> PerClock<P, G> {
