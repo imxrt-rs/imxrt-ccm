@@ -156,6 +156,7 @@
 
 mod i2c;
 mod perclock;
+mod register;
 mod spi;
 mod uart;
 
