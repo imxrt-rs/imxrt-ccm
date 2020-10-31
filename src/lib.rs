@@ -174,8 +174,7 @@ pub use spi::{
     clock_gate as clock_gate_spi, configure as configure_spi, frequency as frequency_spi, SPI,
 };
 pub use uart::{
-    clock_gate as clock_gate_uart, configure as configure_uart,
-    CLOCK_FREQUENCY_HZ as UART_CLOCK_FREQUENCY_HZ, UART,
+    clock_gate as clock_gate_uart, configure as configure_uart, frequency as frequency_uart, UART,
 };
 
 use core::marker::PhantomData;
@@ -400,9 +399,7 @@ impl<P, G> PerClock<P, G> {
 
 /// The UART clock
 ///
-/// The UART clock is based on the crystal oscillator. See
-/// [`UART_CLOCK_FREQUENCY_HZ`](constant.UART_CLOCK_FREQUENCY_HZ.html) for its
-/// constant value.
+/// The UART clock is based on the crystal oscillator.
 pub struct UARTClock<C>(PhantomData<C>);
 
 impl<C> UARTClock<C> {

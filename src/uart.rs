@@ -1,21 +1,36 @@
 //! UART clock control
 
 use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, UARTClock, CCGR_BASE};
+use crate::register::{Field, Register};
 
 /// UART clock frequency (Hz)
-pub const CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ;
+const CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ;
+const DEFAULT_CLOCK_DIVIDER: u32 = 1;
 
-impl<U> Disabled<UARTClock<U>> {
-    /// Enable the UART clocks
+impl<U> Disabled<UARTClock<U>>
+where
+    U: Instance<Inst = UART>,
+{
+    /// Enable the UART clocks with default divider
     ///
     /// When `enable` returns, all UART clock gates will be set to off.
     /// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)
     /// to turn on UART clock gates.
     #[inline(always)]
-    pub fn enable(self, _: &mut Handle) -> UARTClock<U>
-    where
-        U: Instance<Inst = UART>,
-    {
+    pub fn enable(self, handle: &mut Handle) -> UARTClock<U> {
+        self.enable_divider(handle, DEFAULT_CLOCK_DIVIDER)
+    }
+
+    /// Enable the UART clocks with a clock divider.
+    ///
+    /// The divider should be between [1, 64]. The function will treat a 0 as 1,
+    /// and anything greater than 64 as 64.
+    ///
+    /// When `enable` returns, all UART clock gates will be set to off.
+    /// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)
+    /// to turn on UART clock gates.
+    #[inline(always)]
+    pub fn enable_divider(self, _: &mut Handle, divider: u32) -> UARTClock<U> {
         unsafe {
             clock_gate::<U>(UART::UART1, ClockGate::Off);
             clock_gate::<U>(UART::UART2, ClockGate::Off);
@@ -26,7 +41,7 @@ impl<U> Disabled<UARTClock<U>> {
             clock_gate::<U>(UART::UART7, ClockGate::Off);
             clock_gate::<U>(UART::UART8, ClockGate::Off);
 
-            configure()
+            configure(divider)
         };
         self.0
     }
@@ -54,6 +69,12 @@ impl<U> UARTClock<U> {
     {
         unsafe { clock_gate::<U>(uart.instance(), gate) }
     }
+
+    /// Returns the UART clock frequency
+    #[inline(always)]
+    pub fn frequency(&self) -> u32 {
+        frequency()
+    }
 }
 
 /// Set the clock gate for a UART peripheral
@@ -79,10 +100,19 @@ pub unsafe fn clock_gate<U: Instance<Inst = UART>>(uart: UART, gate: ClockGate) 
     }
 }
 
+const UART_CLK_PODF: Field = Field::new(0, 0x3F);
+// Note that the mask is 1 for 1011, but the adjacent bit is reserved
+const UART_CLK_SEL: Field = Field::new(6, 0x3);
+const CSCDR1: Register =
+    unsafe { Register::new(UART_CLK_PODF, UART_CLK_SEL, 0x400F_C024 as *mut u32) };
+
 /// Configure the UART clock root
 ///
 /// Configure will **not** disable peripheral clock gates. You should disable
 /// clock gates yourself before calling this function.
+///
+/// The divider should be between [1, 64]. The function will treat a 0 as 1,
+/// and anything greater than 64 as 64.
 ///
 /// # Safety
 ///
@@ -90,18 +120,66 @@ pub unsafe fn clock_gate<U: Instance<Inst = UART>>(uart: UART, gate: ClockGate) 
 /// the CCM. Consider using the [`UARTClock`](struct.UARTClock.html) for a
 /// safer interface.
 #[inline(always)]
-pub unsafe fn configure() {
-    const CSCDR1: *mut u32 = 0x400F_C024 as *mut u32;
-    const UART_CLK_PODF_OFFSET: u32 = 0;
-    const UART_CLK_PODF_MASK: u32 = 0x3F << UART_CLK_PODF_OFFSET;
-    const UART_CLK_SEL_OFFSET: u32 = 6;
-    const UART_CLK_SEL_MASK: u32 = 0x3 << UART_CLK_SEL_OFFSET; // Note that the mask is 1 for 1011, but the adjacent bit is reserved
-    const OSCILLATOR: u32 = 1; // Same value for 1062, 1011
-    const DIVIDE_1: u32 = 0;
+pub unsafe fn configure(divider: u32) {
+    configure_(divider, CSCDR1);
+}
 
-    let mut cscdr1 = CSCDR1.read_volatile();
-    cscdr1 &= !(UART_CLK_PODF_MASK | UART_CLK_SEL_MASK);
-    cscdr1 |= DIVIDE_1 << UART_CLK_PODF_OFFSET;
-    cscdr1 |= OSCILLATOR << UART_CLK_SEL_OFFSET;
-    CSCDR1.write_volatile(cscdr1);
+#[inline(always)]
+unsafe fn configure_(divider: u32, reg: Register) {
+    const OSCILLATOR: u32 = 1; // Same value for 1060, 1010
+    reg.set(divider.min(64).max(1).saturating_sub(1), OSCILLATOR);
+}
+
+/// Returns the UART clock frequency
+#[inline(always)]
+pub fn frequency() -> u32 {
+    frequency_(CSCDR1)
+}
+
+#[inline(always)]
+fn frequency_(reg: Register) -> u32 {
+    let divider = reg.divider() + 1;
+    CLOCK_FREQUENCY_HZ / divider
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{
+        configure_, frequency_, Register, CLOCK_FREQUENCY_HZ, UART_CLK_PODF, UART_CLK_SEL,
+    };
+
+    unsafe fn register(mem: &mut u32) -> Register {
+        Register::new(UART_CLK_PODF, UART_CLK_SEL, mem)
+    }
+
+    #[test]
+    fn uart_divider_upper_bound() {
+        let mut mem: u32 = 0;
+        unsafe {
+            let reg = register(&mut mem);
+            configure_(65, reg);
+            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 64);
+        }
+    }
+
+    #[test]
+    fn uart_divider_lower_bound() {
+        let mut mem: u32 = 0;
+        unsafe {
+            let reg = register(&mut mem);
+            configure_(0, reg);
+            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ);
+        }
+    }
+
+    #[test]
+    fn uart_divider() {
+        let mut mem: u32 = 0;
+        unsafe {
+            let reg = register(&mut mem);
+            configure_(7, reg);
+            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 7);
+        }
+    }
 }
