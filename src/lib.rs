@@ -502,5 +502,23 @@ mod tests {
             set_clock_gate(&mut reg, &[3], 0b1);
         }
         assert_eq!(reg, (0b11 << 14) | (0b01 << 6));
+
+        unsafe {
+            set_clock_gate(
+                &mut reg,
+                &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                0b01,
+            );
+        }
+        assert_eq!(reg, 0x55555555);
+
+        unsafe {
+            set_clock_gate(
+                &mut reg,
+                &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                0b10,
+            );
+        }
+        assert_eq!(reg, 0xAAAAAAAA);
     }
 }
