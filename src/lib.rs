@@ -161,8 +161,9 @@
 //!
 //! If you enable the `imxrt-ral` feature, you **must** enable one of these features.
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
+mod gate;
 mod i2c;
 mod perclock;
 mod register;
@@ -171,6 +172,8 @@ mod uart;
 
 #[cfg(feature = "imxrt-ral")]
 pub mod ral;
+
+use gate::{get_clock_gate, set_clock_gate, CCGR_BASE};
 
 pub use i2c::{
     clock_gate as clock_gate_i2c, configure as configure_i2c, frequency as frequency_i2c, I2C,
@@ -316,10 +319,21 @@ pub unsafe fn clock_gate_pwm<P: Instance<Inst = PWM>>(pwm: PWM, gate: ClockGate)
     match check_instance::<P>(pwm) {
         Some(PWM::PWM1) => set_clock_gate(CCGR_BASE.add(4), &[8], gate as u8),
         Some(PWM::PWM2) => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
-        Some(PWM::PWM3) => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
-        Some(PWM::PWM4) => set_clock_gate(CCGR_BASE.add(4), &[10], gate as u8),
+        Some(PWM::PWM3) => set_clock_gate(CCGR_BASE.add(4), &[10], gate as u8),
+        Some(PWM::PWM4) => set_clock_gate(CCGR_BASE.add(4), &[11], gate as u8),
         _ => (),
     }
+}
+
+pub unsafe fn get_clock_gate_pwm<P: Instance<Inst = PWM>>(pwm: PWM) -> Option<ClockGate> {
+    check_instance::<P>(pwm)
+        .map(|pwm| match pwm {
+            PWM::PWM1 => get_clock_gate(CCGR_BASE.add(4), 8),
+            PWM::PWM2 => get_clock_gate(CCGR_BASE.add(4), 9),
+            PWM::PWM3 => get_clock_gate(CCGR_BASE.add(4), 10),
+            PWM::PWM4 => get_clock_gate(CCGR_BASE.add(4), 11),
+        })
+        .map(ClockGate::from_u8)
 }
 
 /// The root clocks and CCM handle
@@ -382,6 +396,18 @@ pub enum ClockGate {
     OnlyRun = 0b01,
     /// Clock is on in all modes, except stop mode
     On = 0b11,
+}
+
+impl ClockGate {
+    #[inline(always)]
+    fn from_u8(raw: u8) -> ClockGate {
+        match raw & 0b11 {
+            0b00 => ClockGate::Off,
+            0b01 => ClockGate::OnlyRun,
+            0b11 => ClockGate::On,
+            _ => unreachable!(),
+        }
+    }
 }
 
 /// Crystal oscillator frequency
@@ -464,61 +490,30 @@ impl<I> I2CClock<I> {
     }
 }
 
-/// Starting address of the clock control gate registers
-const CCGR_BASE: *mut u32 = 0x400F_C068 as *mut u32;
-
-/// # Safety
-///
-/// Should only be used when you have a mutable reference to an enabled clock.
-/// Should only be used on a valid clock gate register.
-#[inline(always)]
-unsafe fn set_clock_gate(ccgr: *mut u32, gates: &[usize], value: u8) {
-    const MASK: u32 = 0b11;
-    let mut register = core::ptr::read_volatile(ccgr);
-
-    for gate in gates {
-        let shift: usize = gate * 2;
-        register &= !(MASK << shift);
-        register |= (MASK & (value as u32)) << shift;
-    }
-
-    core::ptr::write_volatile(ccgr, register);
-}
-
 #[cfg(test)]
 mod tests {
-    use super::set_clock_gate;
+    use std::marker::PhantomData;
+
+    pub struct AlwaysEnabled<Inst: Copy + PartialEq>(PhantomData<Inst>);
+    unsafe impl<Inst: Copy + PartialEq> super::Instance for AlwaysEnabled<Inst> {
+        type Inst = Inst;
+        fn instance(&self) -> Self::Inst {
+            panic!("The AlwaysEnabled stub cannot return an instance");
+        }
+        fn is_valid(_: Self::Inst) -> bool {
+            true
+        }
+    }
+    use super::{clock_gate_pwm, get_clock_gate_pwm, ClockGate, PWM};
 
     #[test]
-    fn test_set_clock_gate() {
-        let mut reg = 0;
-
+    fn test_clock_gate_pwm() {
         unsafe {
-            set_clock_gate(&mut reg, &[3, 7], 0b11);
-        }
-        assert_eq!(reg, (0b11 << 14) | (0b11 << 6));
-
-        unsafe {
-            set_clock_gate(&mut reg, &[3], 0b1);
-        }
-        assert_eq!(reg, (0b11 << 14) | (0b01 << 6));
-
-        unsafe {
-            set_clock_gate(
-                &mut reg,
-                &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                0b01,
+            clock_gate_pwm::<AlwaysEnabled<PWM>>(PWM::PWM3, ClockGate::On);
+            assert_eq!(
+                get_clock_gate_pwm::<AlwaysEnabled<PWM>>(PWM::PWM3).unwrap(),
+                ClockGate::On
             );
         }
-        assert_eq!(reg, 0x55555555);
-
-        unsafe {
-            set_clock_gate(
-                &mut reg,
-                &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                0b10,
-            );
-        }
-        assert_eq!(reg, 0xAAAAAAAA);
     }
 }
