@@ -1,6 +1,9 @@
 //! I2C clock control
 
-use super::{set_clock_gate, ClockGate, Disabled, Handle, I2CClock, Instance, CCGR_BASE};
+use super::{
+    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, I2CClock,
+    Instance,
+};
 use crate::register::{Field, Register};
 
 /// Base I2C clock frequency (Hz)
@@ -23,10 +26,10 @@ where
     #[inline(always)]
     pub fn enable_divider(self, _: &mut Handle, divider: u32) -> I2CClock<I> {
         unsafe {
-            clock_gate::<I>(I2C::I2C1, ClockGate::Off);
-            clock_gate::<I>(I2C::I2C2, ClockGate::Off);
-            clock_gate::<I>(I2C::I2C3, ClockGate::Off);
-            clock_gate::<I>(I2C::I2C4, ClockGate::Off);
+            set_clock_gate::<I>(I2C::I2C1, ClockGate::Off);
+            set_clock_gate::<I>(I2C::I2C2, ClockGate::Off);
+            set_clock_gate::<I>(I2C::I2C3, ClockGate::Off);
+            set_clock_gate::<I>(I2C::I2C4, ClockGate::Off);
 
             configure(divider)
         };
@@ -56,6 +59,30 @@ pub enum I2C {
     I2C4,
 }
 
+impl ClockGateLocator for I2C {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        match self {
+            I2C::I2C1 => ClockGateLocation {
+                offset: 2,
+                gates: &[3],
+            },
+            I2C::I2C2 => ClockGateLocation {
+                offset: 2,
+                gates: &[4],
+            },
+            I2C::I2C3 => ClockGateLocation {
+                offset: 2,
+                gates: &[5],
+            },
+            I2C::I2C4 => ClockGateLocation {
+                offset: 6,
+                gates: &[12],
+            },
+        }
+    }
+}
+
 impl<I> I2CClock<I> {
     /// Set the clock gate gate for the I2C instance
     #[inline(always)]
@@ -63,32 +90,13 @@ impl<I> I2CClock<I> {
     where
         I: Instance<Inst = I2C>,
     {
-        unsafe { clock_gate::<I>(i2c.instance(), gate) }
+        unsafe { set_clock_gate::<I>(i2c.instance(), gate) }
     }
 
     /// Returns the configured I2C clock frequency
     #[inline(always)]
     pub fn frequency(&self) -> u32 {
         frequency()
-    }
-}
-
-/// Set the clock gate gate for a I2C peripheral
-///
-/// # Safety
-///
-/// This could be called anywhere, modifying global memory that's owned by
-/// the CCM. Consider using the [`I2CClock`](struct.I2CClock.html) for a
-/// safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate<I: Instance<Inst = I2C>>(i2c: I2C, gate: ClockGate) {
-    let value = gate as u8;
-    match super::check_instance::<I>(i2c) {
-        Some(I2C::I2C1) => set_clock_gate(CCGR_BASE.add(2), &[3], value),
-        Some(I2C::I2C2) => set_clock_gate(CCGR_BASE.add(2), &[4], value),
-        Some(I2C::I2C3) => set_clock_gate(CCGR_BASE.add(2), &[5], value),
-        Some(I2C::I2C4) => set_clock_gate(CCGR_BASE.add(6), &[12], value),
-        _ => (),
     }
 }
 

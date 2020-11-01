@@ -1,6 +1,9 @@
 //! UART clock control
 
-use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, UARTClock, CCGR_BASE};
+use super::{
+    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
+    UARTClock,
+};
 use crate::register::{Field, Register};
 
 /// UART clock frequency (Hz)
@@ -32,14 +35,14 @@ where
     #[inline(always)]
     pub fn enable_divider(self, _: &mut Handle, divider: u32) -> UARTClock<U> {
         unsafe {
-            clock_gate::<U>(UART::UART1, ClockGate::Off);
-            clock_gate::<U>(UART::UART2, ClockGate::Off);
-            clock_gate::<U>(UART::UART3, ClockGate::Off);
-            clock_gate::<U>(UART::UART4, ClockGate::Off);
-            clock_gate::<U>(UART::UART5, ClockGate::Off);
-            clock_gate::<U>(UART::UART6, ClockGate::Off);
-            clock_gate::<U>(UART::UART7, ClockGate::Off);
-            clock_gate::<U>(UART::UART8, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART1, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART2, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART3, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART4, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART5, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART6, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART7, ClockGate::Off);
+            set_clock_gate::<U>(UART::UART8, ClockGate::Off);
 
             configure(divider)
         };
@@ -67,7 +70,7 @@ impl<U> UARTClock<U> {
     where
         U: Instance<Inst = UART>,
     {
-        unsafe { clock_gate::<U>(uart.instance(), gate) }
+        unsafe { set_clock_gate::<U>(uart.instance(), gate) }
     }
 
     /// Returns the UART clock frequency
@@ -77,26 +80,43 @@ impl<U> UARTClock<U> {
     }
 }
 
-/// Set the clock gate for a UART peripheral
-///
-/// # Safety
-///
-/// This could be called anywhere, modifying global memory that's owned by
-/// the CCM. Consider using the [`UARTClock`](struct.UARTClock.html) for a
-/// safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate<U: Instance<Inst = UART>>(uart: UART, gate: ClockGate) {
-    let value = gate as u8;
-    match super::check_instance::<U>(uart) {
-        Some(UART::UART1) => set_clock_gate(CCGR_BASE.add(5), &[12], value),
-        Some(UART::UART2) => set_clock_gate(CCGR_BASE.add(0), &[14], value),
-        Some(UART::UART3) => set_clock_gate(CCGR_BASE.add(0), &[6], value),
-        Some(UART::UART4) => set_clock_gate(CCGR_BASE.add(1), &[12], value),
-        Some(UART::UART5) => set_clock_gate(CCGR_BASE.add(3), &[1], value),
-        Some(UART::UART6) => set_clock_gate(CCGR_BASE.add(3), &[3], value),
-        Some(UART::UART7) => set_clock_gate(CCGR_BASE.add(5), &[13], value),
-        Some(UART::UART8) => set_clock_gate(CCGR_BASE.add(6), &[7], value),
-        _ => (),
+impl ClockGateLocator for UART {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        match self {
+            UART::UART1 => ClockGateLocation {
+                offset: 5,
+                gates: &[12],
+            },
+            UART::UART2 => ClockGateLocation {
+                offset: 0,
+                gates: &[14],
+            },
+            UART::UART3 => ClockGateLocation {
+                offset: 0,
+                gates: &[6],
+            },
+            UART::UART4 => ClockGateLocation {
+                offset: 1,
+                gates: &[12],
+            },
+            UART::UART5 => ClockGateLocation {
+                offset: 3,
+                gates: &[1],
+            },
+            UART::UART6 => ClockGateLocation {
+                offset: 3,
+                gates: &[3],
+            },
+            UART::UART7 => ClockGateLocation {
+                offset: 5,
+                gates: &[13],
+            },
+            UART::UART8 => ClockGateLocation {
+                offset: 6,
+                gates: &[7],
+            },
+        }
     }
 }
 

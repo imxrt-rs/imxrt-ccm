@@ -1,6 +1,9 @@
 //! Periodic clock implementations
 
-use super::{set_clock_gate, ClockGate, Disabled, Handle, Instance, PerClock, CCGR_BASE};
+use super::{
+    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
+    PerClock,
+};
 use crate::register::{Field, Register};
 
 /// Peripheral instance identifier for GPT
@@ -10,9 +13,35 @@ pub enum GPT {
     GPT2,
 }
 
+impl ClockGateLocator for GPT {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        match self {
+            GPT::GPT1 => ClockGateLocation {
+                offset: 1,
+                gates: &[10, 11],
+            },
+            GPT::GPT2 => ClockGateLocation {
+                offset: 0,
+                gates: &[12, 13],
+            },
+        }
+    }
+}
+
 /// Peripheral instance identifier for PIT
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct PIT;
+
+impl ClockGateLocator for PIT {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        ClockGateLocation {
+            offset: 1,
+            gates: &[6],
+        }
+    }
+}
 
 /// Periodic clock frequency (Hz)
 ///
@@ -27,15 +56,15 @@ impl<P, G> PerClock<P, G> {
     where
         G: Instance<Inst = GPT>,
     {
-        unsafe { clock_gate_gpt::<G>(gpt.instance(), gate) };
+        unsafe { set_clock_gate::<G>(gpt.instance(), gate) };
     }
     /// Set the clock gate for the PIT
     #[inline(always)]
-    pub fn clock_gate_pit(&mut self, _: &mut P, gate: ClockGate)
+    pub fn clock_gate_pit(&mut self, pit: &mut P, gate: ClockGate)
     where
         P: Instance<Inst = PIT>,
     {
-        unsafe { clock_gate_pit::<P>(gate) };
+        unsafe { set_clock_gate::<P>(pit.instance(), gate) };
     }
     /// Returns the configured periodic clock frequency
     #[inline(always)]
@@ -59,9 +88,9 @@ where
     #[inline(always)]
     pub fn enable_divider(self, _: &mut Handle, divider: u32) -> PerClock<P, G> {
         unsafe {
-            clock_gate_gpt::<G>(GPT::GPT1, ClockGate::Off);
-            clock_gate_gpt::<G>(GPT::GPT2, ClockGate::Off);
-            clock_gate_pit::<P>(ClockGate::Off);
+            set_clock_gate::<G>(GPT::GPT1, ClockGate::Off);
+            set_clock_gate::<G>(GPT::GPT2, ClockGate::Off);
+            set_clock_gate::<P>(PIT, ClockGate::Off);
             configure(divider);
         };
         self.0
@@ -76,35 +105,6 @@ where
     pub fn enable(self, handle: &mut Handle) -> PerClock<P, G> {
         self.enable_divider(handle, DEFAULT_CLOCK_DIVIDER)
     }
-}
-
-/// Set the GPT clock gate
-///
-/// # Safety
-///
-/// This could be called anywhere, modifying global memory that's owned by
-/// the CCM. Consider using the [`PerClock`](struct.PerClock.html) for a
-/// safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate_gpt<G: Instance<Inst = GPT>>(gpt: GPT, gate: ClockGate) {
-    let value = gate as u8;
-    match super::check_instance::<G>(gpt) {
-        Some(GPT::GPT1) => set_clock_gate(CCGR_BASE.add(1), &[10, 11], value),
-        Some(GPT::GPT2) => set_clock_gate(CCGR_BASE.add(0), &[12, 13], value),
-        _ => (),
-    }
-}
-
-/// Set the PIT clock gate
-///
-/// # Safety
-///
-/// This could be used by anyone who supplies a PIT register block, which is globally
-/// available. Consider using [`PerClock::clock_gate_pit`](struct.PerClock.html#method.clock_gate_pit)
-/// for a safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate_pit<P: Instance<Inst = PIT>>(gate: ClockGate) {
-    set_clock_gate(CCGR_BASE.add(1), &[6], gate as u8);
 }
 
 const PERCLK_PODF: Field = Field::new(0, 0x3F);

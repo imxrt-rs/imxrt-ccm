@@ -173,23 +173,46 @@ mod uart;
 #[cfg(feature = "imxrt-ral")]
 pub mod ral;
 
-use gate::{get_clock_gate, set_clock_gate, CCGR_BASE};
-
-pub use i2c::{
-    clock_gate as clock_gate_i2c, configure as configure_i2c, frequency as frequency_i2c, I2C,
-};
-pub use perclock::{
-    clock_gate_gpt, clock_gate_pit, configure as configure_perclock, frequency as frequency_perclk,
-    GPT, PIT,
-};
-pub use spi::{
-    clock_gate as clock_gate_spi, configure as configure_spi, frequency as frequency_spi, SPI,
-};
-pub use uart::{
-    clock_gate as clock_gate_uart, configure as configure_uart, frequency as frequency_uart, UART,
-};
+pub use i2c::{configure as configure_i2c, frequency as frequency_i2c, I2C};
+pub use perclock::{configure as configure_perclock, frequency as frequency_perclk, GPT, PIT};
+pub use spi::{configure as configure_spi, frequency as frequency_spi, SPI};
+pub use uart::{configure as configure_uart, frequency as frequency_uart, UART};
 
 use core::marker::PhantomData;
+
+/// Describes the location of a clock gate field
+#[derive(Clone, Copy)]
+pub struct ClockGateLocation {
+    /// CCGR register offset
+    ///
+    /// `3` in `CCM_CCGR3[CG7]`
+    offset: usize,
+    /// Clock gate fields
+    ///
+    /// `&[7]` in `CCM_CCGR3[CG7]`
+    gates: &'static [usize],
+}
+
+/// A type that can locate a clock gate
+///
+/// `ClockGateLocator` is implemented on all structs and enums
+/// that describe peripheral instances.
+pub trait ClockGateLocator: Copy + PartialEq + private::Sealed {
+    /// Returns the location of a clock gate
+    fn location(&self) -> ClockGateLocation;
+}
+
+mod private {
+    pub trait Sealed {}
+    impl Sealed for super::ADC {}
+    impl Sealed for super::DMA {}
+    impl Sealed for super::GPT {}
+    impl Sealed for super::I2C {}
+    impl Sealed for super::PIT {}
+    impl Sealed for super::PWM {}
+    impl Sealed for super::SPI {}
+    impl Sealed for super::UART {}
+}
 
 /// A peripheral instance that has a clock gate
 ///
@@ -206,7 +229,7 @@ use core::marker::PhantomData;
 /// associated with the object.
 pub unsafe trait Instance {
     /// An identifier that describes the instance
-    type Inst: Copy + PartialEq;
+    type Inst: ClockGateLocator;
     /// Returns the peripheral instance identifier
     fn instance(&self) -> Self::Inst;
     /// Returns `true` if this instance is valid for a particular
@@ -225,11 +248,56 @@ fn check_instance<I: Instance>(inst: I::Inst) -> Option<I::Inst> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DMA;
 
+impl ClockGateLocator for DMA {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        ClockGateLocation {
+            offset: 5,
+            gates: &[3],
+        }
+    }
+}
+
+/// Set the clock gate for a peripheral instance
+///
+/// `set_clock_gate` does nothing if the instance is invalid.
+///
+/// # Safety
+///
+/// This modifies global, mutable memory that's owned by the `CCM`. Calling this
+/// function will let you change a clock gate setting for any peripheral instance.
+#[inline(always)]
+pub unsafe fn set_clock_gate<I: Instance>(inst: I::Inst, gate: ClockGate) {
+    check_instance::<I>(inst).map(|inst| gate::set(&inst.location(), gate as u8));
+}
+
+/// Returns the clock gate setting for a peripheral instance
+///
+/// `get_clock_gate` returns `None` if the instance is invalid.
+#[inline(always)]
+pub fn get_clock_gate<I: Instance>(inst: I::Inst) -> Option<ClockGate> {
+    check_instance::<I>(inst).map(|inst| {
+        let raw = gate::get(&inst.location());
+        ClockGate::from_u8(raw)
+    })
+}
+
 /// Peripheral instance identifier for ADCs
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ADC {
     ADC1,
     ADC2,
+}
+
+impl ClockGateLocator for ADC {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        let gates = match self {
+            ADC::ADC1 => &[8],
+            ADC::ADC2 => &[4],
+        };
+        ClockGateLocation { offset: 1, gates }
+    }
 }
 
 /// Peripheral instance identifier for PWM
@@ -239,6 +307,19 @@ pub enum PWM {
     PWM2,
     PWM3,
     PWM4,
+}
+
+impl ClockGateLocator for PWM {
+    #[inline(always)]
+    fn location(&self) -> ClockGateLocation {
+        let gates = match self {
+            PWM::PWM1 => &[8],
+            PWM::PWM2 => &[9],
+            PWM::PWM3 => &[10],
+            PWM::PWM4 => &[11],
+        };
+        ClockGateLocation { offset: 4, gates }
+    }
 }
 
 /// Handle to the CCM register block
@@ -253,11 +334,11 @@ impl Handle {
     /// You should set the clock gate before creating DMA channels. Otherwise, the DMA
     /// peripheral may not work.
     #[inline(always)]
-    pub fn clock_gate_dma<D>(&mut self, _: &mut D, gate: ClockGate)
+    pub fn clock_gate_dma<D>(&mut self, dma: &mut D, gate: ClockGate)
     where
         D: Instance<Inst = DMA>,
     {
-        unsafe { clock_gate_dma::<D>(gate) };
+        unsafe { set_clock_gate::<D>(dma.instance(), gate) };
     }
 
     /// Set the clock gate for the ADC peripheral
@@ -266,7 +347,7 @@ impl Handle {
     where
         A: Instance<Inst = ADC>,
     {
-        unsafe { clock_gate_adc::<A>(adc.instance(), gate) }
+        unsafe { set_clock_gate::<A>(adc.instance(), gate) }
     }
 
     /// Set the clock gate for the PWM peripheral
@@ -275,65 +356,8 @@ impl Handle {
     where
         P: Instance<Inst = PWM>,
     {
-        unsafe { clock_gate_pwm::<P>(pwm.instance(), gate) }
+        unsafe { set_clock_gate::<P>(pwm.instance(), gate) }
     }
-}
-
-/// Set the clock gate for the DMA controller
-///
-/// # Safety
-///
-/// This could be called anywhere, modifying global memory that's owned by
-/// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
-/// safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate_dma<D: Instance<Inst = DMA>>(gate: ClockGate) {
-    set_clock_gate(CCGR_BASE.add(5), &[3], gate as u8);
-}
-
-/// Set the clock gate for the ADC instance
-///
-/// # Safety
-///
-/// This could be called anywhere, modifying global memory that's owned by
-/// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
-/// safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate_adc<A: Instance<Inst = ADC>>(adc: ADC, gate: ClockGate) {
-    match check_instance::<A>(adc) {
-        Some(ADC::ADC1) => set_clock_gate(CCGR_BASE.add(1), &[8], gate as u8),
-        Some(ADC::ADC2) => set_clock_gate(CCGR_BASE.add(1), &[4], gate as u8),
-        _ => (),
-    }
-}
-
-/// Set the clock gate for the PWM instance
-///
-/// # Safety
-///
-/// This could be called anywhere, modifying global memory that's owned by
-/// the CCM. Consider using the CCM [`Handle`](struct.Handle.html) for a
-/// safer interface.
-#[inline(always)]
-pub unsafe fn clock_gate_pwm<P: Instance<Inst = PWM>>(pwm: PWM, gate: ClockGate) {
-    match check_instance::<P>(pwm) {
-        Some(PWM::PWM1) => set_clock_gate(CCGR_BASE.add(4), &[8], gate as u8),
-        Some(PWM::PWM2) => set_clock_gate(CCGR_BASE.add(4), &[9], gate as u8),
-        Some(PWM::PWM3) => set_clock_gate(CCGR_BASE.add(4), &[10], gate as u8),
-        Some(PWM::PWM4) => set_clock_gate(CCGR_BASE.add(4), &[11], gate as u8),
-        _ => (),
-    }
-}
-
-pub unsafe fn get_clock_gate_pwm<P: Instance<Inst = PWM>>(pwm: PWM) -> Option<ClockGate> {
-    check_instance::<P>(pwm)
-        .map(|pwm| match pwm {
-            PWM::PWM1 => get_clock_gate(CCGR_BASE.add(4), 8),
-            PWM::PWM2 => get_clock_gate(CCGR_BASE.add(4), 9),
-            PWM::PWM3 => get_clock_gate(CCGR_BASE.add(4), 10),
-            PWM::PWM4 => get_clock_gate(CCGR_BASE.add(4), 11),
-        })
-        .map(ClockGate::from_u8)
 }
 
 /// The root clocks and CCM handle
@@ -402,9 +426,9 @@ impl ClockGate {
     #[inline(always)]
     fn from_u8(raw: u8) -> ClockGate {
         match raw & 0b11 {
-            0b00 => ClockGate::Off,
-            0b01 => ClockGate::OnlyRun,
-            0b11 => ClockGate::On,
+            off if off == ClockGate::Off as u8 => ClockGate::Off,
+            only_run if only_run == ClockGate::OnlyRun as u8 => ClockGate::OnlyRun,
+            on if on == ClockGate::On as u8 => ClockGate::On,
             _ => unreachable!(),
         }
     }
@@ -487,33 +511,5 @@ impl<I> I2CClock<I> {
     /// API.
     pub const unsafe fn assume_enabled() -> Self {
         Self(PhantomData)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::marker::PhantomData;
-
-    pub struct AlwaysEnabled<Inst: Copy + PartialEq>(PhantomData<Inst>);
-    unsafe impl<Inst: Copy + PartialEq> super::Instance for AlwaysEnabled<Inst> {
-        type Inst = Inst;
-        fn instance(&self) -> Self::Inst {
-            panic!("The AlwaysEnabled stub cannot return an instance");
-        }
-        fn is_valid(_: Self::Inst) -> bool {
-            true
-        }
-    }
-    use super::{clock_gate_pwm, get_clock_gate_pwm, ClockGate, PWM};
-
-    #[test]
-    fn test_clock_gate_pwm() {
-        unsafe {
-            clock_gate_pwm::<AlwaysEnabled<PWM>>(PWM::PWM3, ClockGate::On);
-            assert_eq!(
-                get_clock_gate_pwm::<AlwaysEnabled<PWM>>(PWM::PWM3).unwrap(),
-                ClockGate::On
-            );
-        }
     }
 }
