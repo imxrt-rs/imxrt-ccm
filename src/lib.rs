@@ -310,7 +310,9 @@ impl ClockGateLocator for DMA {
 /// function will let you change a clock gate setting for any peripheral instance.
 #[inline(always)]
 pub unsafe fn set_clock_gate<I: Instance>(inst: I::Inst, gate: ClockGate) {
-    check_instance::<I>(inst).map(|inst| gate::set(&inst.location(), gate as u8));
+    if let Some(inst) = check_instance::<I>(inst) {
+        gate::set(&inst.location(), gate as u8)
+    }
 }
 
 /// Returns the clock gate setting for a peripheral instance
