@@ -1,9 +1,6 @@
 //! Periodic clock implementations
 
-use super::{
-    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
-    PerClock,
-};
+use super::{ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance, PerClock};
 use crate::register::{Field, Register};
 
 /// Peripheral instance identifier for GPT
@@ -50,26 +47,48 @@ const CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ;
 const DEFAULT_CLOCK_DIVIDER: u32 = 24;
 
 impl<P, G> PerClock<P, G> {
-    /// Set the clock gate for the GPT
-    #[inline(always)]
-    pub fn clock_gate_gpt(&mut self, gpt: &mut G, gate: ClockGate)
-    where
-        G: Instance<Inst = GPT>,
-    {
-        unsafe { set_clock_gate::<G>(gpt.instance(), gate) };
-    }
-    /// Set the clock gate for the PIT
-    #[inline(always)]
-    pub fn clock_gate_pit(&mut self, pit: &mut P, gate: ClockGate)
-    where
-        P: Instance<Inst = PIT>,
-    {
-        unsafe { set_clock_gate::<P>(pit.instance(), gate) };
-    }
     /// Returns the configured periodic clock frequency
     #[inline(always)]
     pub fn frequency(&self) -> u32 {
         frequency()
+    }
+}
+
+impl<P, G> PerClock<P, G>
+where
+    G: Instance<Inst = GPT>,
+{
+    /// Returns the clock gate setting for the GPT
+    #[inline(always)]
+    pub fn clock_gate_gpt(&self, gpt: &G) -> ClockGate {
+        // Unwrap OK: instance must be valid to call this function,
+        // or the Instance implementation is invalid.
+        super::get_clock_gate::<G>(gpt.instance()).unwrap()
+    }
+
+    /// Set the clock gate for the GPT
+    #[inline(always)]
+    pub fn set_clock_gate_gpt(&mut self, gpt: &mut G, gate: ClockGate) {
+        unsafe { super::set_clock_gate::<G>(gpt.instance(), gate) };
+    }
+}
+
+impl<P, G> PerClock<P, G>
+where
+    P: Instance<Inst = PIT>,
+{
+    /// Returns the clock gate setting for the PIT
+    #[inline(always)]
+    pub fn clock_gate_pit(&self, pit: &P) -> ClockGate {
+        // Unwrap OK: instance must be valid to call this function,
+        // or the Instance implementation is invalid.
+        super::get_clock_gate::<P>(pit.instance()).unwrap()
+    }
+
+    /// Set the clock gate for the PIT
+    #[inline(always)]
+    pub fn set_clock_gate_pit(&mut self, pit: &mut P, gate: ClockGate) {
+        unsafe { super::set_clock_gate::<P>(pit.instance(), gate) };
     }
 }
 
@@ -88,9 +107,9 @@ where
     #[inline(always)]
     pub fn enable_divider(self, _: &mut Handle, divider: u32) -> PerClock<P, G> {
         unsafe {
-            set_clock_gate::<G>(GPT::GPT1, ClockGate::Off);
-            set_clock_gate::<G>(GPT::GPT2, ClockGate::Off);
-            set_clock_gate::<P>(PIT, ClockGate::Off);
+            super::set_clock_gate::<G>(GPT::GPT1, ClockGate::Off);
+            super::set_clock_gate::<G>(GPT::GPT2, ClockGate::Off);
+            super::set_clock_gate::<P>(PIT, ClockGate::Off);
             configure(divider);
         };
         self.0

@@ -63,13 +63,21 @@ pub enum UART {
     UART8,
 }
 
-impl<U> UARTClock<U> {
+impl<U> UARTClock<U>
+where
+    U: Instance<Inst = UART>,
+{
+    /// Returns the clock gate setting for the UART instance
+    #[inline(always)]
+    pub fn clock_gate(&self, uart: &U) -> ClockGate {
+        // Unwrap OK: instance must be valid to call this function,
+        // or the Instance implementation is invalid.
+        super::get_clock_gate::<U>(uart.instance()).unwrap()
+    }
+
     /// Set the clock gate for the UART instance
     #[inline(always)]
-    pub fn clock_gate(&mut self, uart: &mut U, gate: ClockGate)
-    where
-        U: Instance<Inst = UART>,
-    {
+    pub fn set_clock_gate(&mut self, uart: &mut U, gate: ClockGate) {
         unsafe { set_clock_gate::<U>(uart.instance(), gate) }
     }
 

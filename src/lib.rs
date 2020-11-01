@@ -129,7 +129,7 @@
 //!     # I2C { instance_id: 3 };
 //! # let mut i2c_clock = unsafe { ccm::I2CClock::<I2C>::assume_enabled() };
 //! // Enable I2C3 clock gate
-//! i2c_clock.clock_gate(&mut i2c3, ccm::ClockGate::On);
+//! i2c_clock.set_clock_gate(&mut i2c3, ccm::ClockGate::On);
 //! // Create the higher-level driver, requires the I2C clock
 //! let i2c = I2CDriver::new(i2c3, &i2c_clock);
 //! ```
@@ -219,6 +219,48 @@ mod private {
 /// `Instance` lets you associate a peripheral with its clock gate. This lets you control a peripheral's
 /// clock gate by supplying the peripheral itself, rather than modifying an arbitrary field in a CCM
 /// register.
+///
+/// Implementers must hold the invariant: the return of `instance`, passed into `is_valid`, must be
+/// `true`. If `instance` never returns a variant, `is_valid` must return `false`.
+///
+/// Suppose that an i.MX RT processor only supports one GPT instance. Here's an example of a valid `Instance`
+/// implementation. It's assumed that there is only one `MyGPT` object, and that it represents the GPT1
+/// timer.
+///
+/// ```
+/// # use imxrt_ccm::{Instance, GPT};
+/// struct MyGPT;
+/// unsafe impl Instance for MyGPT {
+///     type Inst = GPT;
+///     fn instance(&self) -> Self::Inst {
+///         GPT::GPT1
+///     }
+///     fn is_valid(inst: GPT) -> bool {
+///         inst == GPT::GPT1
+///     }
+/// }
+///
+/// let my_gpt = MyGPT;
+/// assert!(MyGPT::is_valid(my_gpt.instance()));
+/// ```
+///
+/// If `is_valid` returned `false` when called with `GPT::GPT1`, the implementation is invalid.
+///
+/// ```should_panic
+/// # use imxrt_ccm::{Instance, GPT};
+/// # struct MyGPT;
+/// unsafe impl Instance for MyGPT {
+///     type Inst = GPT;
+///     fn instance(&self) -> Self::Inst {
+///         GPT::GPT1
+///     }
+///     fn is_valid(inst: GPT) -> bool {
+///         false // Invalid implementation!
+///     }
+/// }
+/// # let my_gpt = MyGPT;
+/// # assert!(MyGPT::is_valid(my_gpt.instance()));
+/// ```
 ///
 /// # Safety
 ///
@@ -329,30 +371,60 @@ impl ClockGateLocator for PWM {
 pub struct Handle(());
 
 impl Handle {
-    /// Set the clock gate for the DMA controller
-    ///
-    /// You should set the clock gate before creating DMA channels. Otherwise, the DMA
-    /// peripheral may not work.
+    /// Returns the clock gate setting for the DMA controller
     #[inline(always)]
-    pub fn clock_gate_dma<D>(&mut self, dma: &mut D, gate: ClockGate)
+    pub fn clock_gate_dma<D>(&self, dma: &D) -> ClockGate
+    where
+        D: Instance<Inst = DMA>,
+    {
+        // Unwrap OK: we have the instance, or the `Instance`
+        // implementation is incorrect.
+        get_clock_gate::<D>(dma.instance()).unwrap()
+    }
+
+    /// Set the clock gate for the DMA controller
+    #[inline(always)]
+    pub fn set_clock_gate_dma<D>(&mut self, dma: &mut D, gate: ClockGate)
     where
         D: Instance<Inst = DMA>,
     {
         unsafe { set_clock_gate::<D>(dma.instance(), gate) };
     }
 
+    /// Returns the clock gate setting for the ADC
+    #[inline(always)]
+    pub fn clock_gate_adc<A>(&self, adc: &A) -> ClockGate
+    where
+        A: Instance<Inst = ADC>,
+    {
+        // Unwrap OK: we have the instance, or the `Instance`
+        // implementation is incorrect.
+        get_clock_gate::<A>(adc.instance()).unwrap()
+    }
+
     /// Set the clock gate for the ADC peripheral
     #[inline(always)]
-    pub fn clock_gate_adc<A>(&mut self, adc: &mut A, gate: ClockGate)
+    pub fn set_clock_gate_adc<A>(&mut self, adc: &mut A, gate: ClockGate)
     where
         A: Instance<Inst = ADC>,
     {
         unsafe { set_clock_gate::<A>(adc.instance(), gate) }
     }
 
+    /// Returns the clock gate setting for the ADC
+    #[inline(always)]
+    pub fn clock_gate_pwm<P>(&self, pwm: &P) -> ClockGate
+    where
+        P: Instance<Inst = PWM>,
+    {
+        // Unwrap OK: we have the instance, or the `Instance`
+        // implementation is incorrect.
+        get_clock_gate::<P>(pwm.instance()).unwrap()
+    }
+
     /// Set the clock gate for the PWM peripheral
     #[inline(always)]
-    pub fn clock_gate_pwm<P>(&mut self, pwm: &mut P, gate: ClockGate)
+    pub fn set_clock_gate_pwm<P>(&mut self, pwm: &mut P, gate: ClockGate)
     where
         P: Instance<Inst = PWM>,
     {

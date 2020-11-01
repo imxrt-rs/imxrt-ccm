@@ -65,7 +65,7 @@ unsafe impl Instance for ral::dma0::Instance {
 /// use imxrt_ral::dma0::DMA0;
 ///
 /// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// handle.clock_gate_dma(&mut DMA0::take().unwrap(), ClockGate::On);
+/// handle.set_clock_gate_dma(&mut DMA0::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct DMAClockGate;
@@ -101,7 +101,7 @@ unsafe impl Instance for ral::lpi2c::Instance {
 ///
 /// let CCM{ mut handle, i2c_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut i2c_clock = i2c_clock.enable(&mut handle);
-/// i2c_clock.clock_gate(&mut LPI2C2::take().unwrap(), ClockGate::On);
+/// i2c_clock.set_clock_gate(&mut LPI2C2::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct I2CClockGate;
@@ -132,7 +132,7 @@ unsafe impl Instance for ral::gpt::Instance {
 ///
 /// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut perclock = perclock.enable(&mut handle);
-/// perclock.clock_gate_gpt(&mut GPT2::take().unwrap(), ClockGate::On);
+/// perclock.set_clock_gate_gpt(&mut GPT2::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct GPTClockGate;
@@ -156,7 +156,7 @@ unsafe impl Instance for ral::pit::Instance {
 ///
 /// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut perclock = perclock.enable(&mut handle);
-/// perclock.clock_gate_pit(&mut PIT::take().unwrap(), ClockGate::On);
+/// perclock.set_clock_gate_pit(&mut PIT::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct PITClockGate;
@@ -191,7 +191,7 @@ unsafe impl Instance for ral::lpspi::Instance {
 ///
 /// let CCM{ mut handle, spi_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut spi_clock = spi_clock.enable(&mut handle);
-/// spi_clock.clock_gate(&mut LPSPI1::take().unwrap(), ClockGate::On);
+/// spi_clock.set_clock_gate(&mut LPSPI1::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct SPIClockGate;
@@ -233,7 +233,7 @@ unsafe impl Instance for ral::lpuart::Instance {
 ///
 /// let CCM{ mut handle, uart_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut uart_clock = uart_clock.enable(&mut handle);
-/// uart_clock.clock_gate(&mut LPUART4::take().unwrap(), ClockGate::On);
+/// uart_clock.set_clock_gate(&mut LPUART4::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct UARTClockGate;
@@ -271,7 +271,7 @@ unsafe impl Instance for adc::Instance {
 /// use imxrt_ral::adc1::ADC1;
 ///
 /// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// handle.clock_gate_adc(&mut ADC1::take().unwrap(), ClockGate::On);
+/// handle.set_clock_gate_adc(&mut ADC1::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct ADCClockGate;
@@ -314,7 +314,7 @@ unsafe impl Instance for pwm::Instance {
 /// use imxrt_ral::pwm1::PWM1;
 ///
 /// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// handle.clock_gate_pwm(&mut PWM1::take().unwrap(), ClockGate::On);
+/// handle.set_clock_gate_pwm(&mut PWM1::take().unwrap(), ClockGate::On);
 /// ```
 #[cfg(doctest)]
 struct PWMClockGate;

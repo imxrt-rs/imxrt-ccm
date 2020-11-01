@@ -83,14 +83,22 @@ impl ClockGateLocator for I2C {
     }
 }
 
-impl<I> I2CClock<I> {
-    /// Set the clock gate gate for the I2C instance
+impl<I> I2CClock<I>
+where
+    I: Instance<Inst = I2C>,
+{
+    /// Set the clock gate setting for the I2C instance
     #[inline(always)]
-    pub fn clock_gate(&mut self, i2c: &mut I, gate: ClockGate)
-    where
-        I: Instance<Inst = I2C>,
-    {
+    pub fn set_clock_gate(&mut self, i2c: &mut I, gate: ClockGate) {
         unsafe { set_clock_gate::<I>(i2c.instance(), gate) }
+    }
+
+    /// Returns the clock gate setting for the I2C instance
+    #[inline(always)]
+    pub fn clock_gate(&self, i2c: &I) -> ClockGate {
+        // Unwrap OK: instance must be valid to call this function,
+        // or the Instance implementation is invalid.
+        super::get_clock_gate::<I>(i2c.instance()).unwrap()
     }
 
     /// Returns the configured I2C clock frequency

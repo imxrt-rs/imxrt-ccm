@@ -1,9 +1,6 @@
 //! SPI clock control
 
-use super::{
-    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
-    SPIClock,
-};
+use super::{ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance, SPIClock};
 use crate::register::{Field, Register};
 
 const DEFAULT_CLOCK_DIVIDER: u32 = 5;
@@ -28,10 +25,10 @@ where
     #[inline(always)]
     pub fn enable_divider(self, _: &mut Handle, divider: u32) -> SPIClock<S> {
         unsafe {
-            set_clock_gate::<S>(SPI::SPI1, ClockGate::Off);
-            set_clock_gate::<S>(SPI::SPI2, ClockGate::Off);
-            set_clock_gate::<S>(SPI::SPI3, ClockGate::Off);
-            set_clock_gate::<S>(SPI::SPI4, ClockGate::Off);
+            super::set_clock_gate::<S>(SPI::SPI1, ClockGate::Off);
+            super::set_clock_gate::<S>(SPI::SPI2, ClockGate::Off);
+            super::set_clock_gate::<S>(SPI::SPI3, ClockGate::Off);
+            super::set_clock_gate::<S>(SPI::SPI4, ClockGate::Off);
 
             configure(divider)
         };
@@ -58,14 +55,24 @@ pub enum SPI {
     SPI4,
 }
 
-impl<S> SPIClock<S> {
+impl<S> SPIClock<S>
+where
+    S: Instance<Inst = SPI>,
+{
+    /// Returns the clock gate setting for the SPI instance
+    pub fn clock_gate(&self, spi: &S) -> ClockGate {
+        // Unwrap OK: instance must be valid to call this function,
+        // or the Instance implementation is invalid.
+        super::get_clock_gate::<S>(spi.instance()).unwrap()
+    }
+
     /// Set the clock gate for the SPI instance
     #[inline(always)]
-    pub fn clock_gate(&mut self, spi: &mut S, gate: ClockGate)
+    pub fn set_clock_gate(&mut self, spi: &mut S, gate: ClockGate)
     where
         S: Instance<Inst = SPI>,
     {
-        unsafe { set_clock_gate::<S>(spi.instance(), gate) }
+        unsafe { super::set_clock_gate::<S>(spi.instance(), gate) }
     }
 
     /// Returns the SPI clock frequency
