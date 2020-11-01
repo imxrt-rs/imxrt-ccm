@@ -99,13 +99,8 @@ unsafe impl Instance for ral::lpi2c::Instance {
 
     #[inline(always)]
     fn is_valid(i2c: I2C) -> bool {
-        #[allow(unreachable_patterns)]
-        match i2c {
-            I2C::I2C1 | I2C::I2C2 => true,
-            #[cfg(feature = "imxrt1060")]
-            I2C::I2C3 | I2C::I2C4 => true,
-            _ => false,
-        }
+        matches!(i2c, I2C::I2C1 | I2C::I2C2)
+            || (cfg!(feature = "imxrt1060") && matches!(i2c, I2C::I2C3 | I2C::I2C4))
     }
 }
 
@@ -224,13 +219,8 @@ unsafe impl Instance for ral::lpspi::Instance {
     }
     #[inline(always)]
     fn is_valid(spi: SPI) -> bool {
-        #[allow(unreachable_patterns)]
-        match spi {
-            SPI::SPI1 | SPI::SPI2 => true,
-            #[cfg(feature = "imxrt1060")]
-            SPI::SPI3 | SPI::SPI4 => true,
-            _ => false,
-        }
+        matches!(spi, SPI::SPI1 | SPI::SPI2)
+            || (cfg!(feature = "imxrt1060") && matches!(spi, SPI::SPI3 | SPI::SPI4))
     }
 }
 
@@ -280,13 +270,9 @@ unsafe impl Instance for ral::lpuart::Instance {
     }
     #[inline(always)]
     fn is_valid(uart: UART) -> bool {
-        #[allow(unreachable_patterns)]
-        match uart {
-            UART::UART1 | UART::UART2 | UART::UART3 | UART::UART4 => true,
-            #[cfg(feature = "imxrt1060")]
-            UART::UART5 | UART::UART6 | UART::UART7 | UART::UART8 => true,
-            _ => false,
-        }
+        matches!(uart, UART::UART1 | UART::UART2 | UART::UART3 | UART::UART4)
+            || (cfg!(feature = "imxrt1060")
+                && matches!(uart, UART::UART5 | UART::UART6 | UART::UART7 | UART::UART8))
     }
 }
 
@@ -332,13 +318,7 @@ unsafe impl Instance for adc::Instance {
     }
     #[inline(always)]
     fn is_valid(adc: ADC) -> bool {
-        #[allow(unreachable_patterns)]
-        match adc {
-            ADC::ADC1 => true,
-            #[cfg(feature = "imxrt1060")]
-            ADC::ADC2 => true,
-            _ => false,
-        }
+        matches!(adc, ADC::ADC1) || (cfg!(feature = "imxrt1060") && matches!(adc, ADC::ADC2))
     }
 }
 
@@ -390,13 +370,8 @@ unsafe impl Instance for pwm::Instance {
     }
     #[inline(always)]
     fn is_valid(pwm: PWM) -> bool {
-        #[allow(unreachable_patterns)]
-        match pwm {
-            PWM::PWM1 => true,
-            #[cfg(feature = "imxrt1060")]
-            PWM::PWM2 | PWM::PWM3 | PWM::PWM4 => true,
-            _ => false,
-        }
+        matches!(pwm, PWM::PWM1)
+            || (cfg!(feature = "imxrt1060") && matches!(pwm, PWM::PWM2 | PWM::PWM3 | PWM::PWM4))
     }
 }
 
