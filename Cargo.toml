@@ -3,9 +3,13 @@ name = "imxrt-ccm"
 version = "0.1.0"
 authors = ["Ian McIntyre <ianpmcintyre@gmail.com>"]
 edition = "2018"
+readme = "README.md"
 description = """
-Driver for the i.MX RT clock control module (CCM)
+Clock Control Module (CCM) driver for i.MX RT processors
 """
+license = "MIT OR Apache-2.0"
+keywords = ["imxrt", "nxp", "embedded"]
+categories = ["embedded", "no-std"]
 
 [dependencies.imxrt-ral]
 version = "0.4"
