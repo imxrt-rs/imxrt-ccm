@@ -423,7 +423,7 @@ impl<C> UARTClock<C> {
 
 /// The SPI clock
 ///
-/// The SPI clock is based on the crystal oscillator. See
+/// The SPI clock is based on PLL2. See
 /// [`SPI_CLOCK_FREQUENCY_HZ`](constant.SPI_CLOCK_FREQUENCY_HZ.html) for its
 /// constant value.
 pub struct SPIClock<S>(PhantomData<S>);
