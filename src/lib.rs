@@ -163,6 +163,19 @@
 
 #![cfg_attr(not(test), no_std)]
 
+#[cfg(test)]
+macro_rules! assert_send {
+    ($type:ty) => {
+        ::static_assertions::assert_impl_all!($type: Send);
+    };
+}
+#[cfg(test)]
+macro_rules! assert_not_sync {
+    ($type:ty) => {
+        ::static_assertions::assert_not_impl_any!($type: Sync);
+    };
+}
+
 mod gate;
 mod i2c;
 mod perclock;
@@ -599,4 +612,10 @@ impl<I> I2CClock<I> {
     pub const unsafe fn assume_enabled() -> Self {
         Self(PhantomData)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    assert_send!(super::Handle);
+    assert_not_sync!(super::Handle);
 }

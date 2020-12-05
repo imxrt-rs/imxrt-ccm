@@ -334,3 +334,18 @@ unsafe impl Instance for pwm::Instance {
 /// ```
 #[cfg(doctest)]
 struct PWMClockGate;
+
+#[cfg(test)]
+mod tests {
+    assert_send!(super::PerClock);
+    assert_not_sync!(super::PerClock);
+
+    assert_send!(super::UARTClock);
+    assert_not_sync!(super::UARTClock);
+
+    assert_send!(super::SPIClock);
+    assert_not_sync!(super::SPIClock);
+
+    assert_send!(super::I2CClock);
+    assert_not_sync!(super::I2CClock);
+}
