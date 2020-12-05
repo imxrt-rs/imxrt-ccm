@@ -12,21 +12,21 @@ use imxrt_ral as ral;
 /// Helper for a clock control module designed to the
 /// RAL interface.
 pub type CCM = crate::CCM<
-    ral::pit::Instance,
-    ral::gpt::Instance,
-    ral::lpuart::Instance,
-    ral::lpspi::Instance,
-    ral::lpi2c::Instance,
+    ral::pit::RegisterBlock,
+    ral::gpt::RegisterBlock,
+    ral::lpuart::RegisterBlock,
+    ral::lpspi::RegisterBlock,
+    ral::lpi2c::RegisterBlock,
 >;
 
 /// A periodic clock that controls RAL PIT and GPT timings
-pub type PerClock = crate::PerClock<ral::pit::Instance, ral::gpt::Instance>;
+pub type PerClock = crate::PerClock<ral::pit::RegisterBlock, ral::gpt::RegisterBlock>;
 /// A UART clock that controls RAL LPUART timing
-pub type UARTClock = crate::UARTClock<ral::lpuart::Instance>;
+pub type UARTClock = crate::UARTClock<ral::lpuart::RegisterBlock>;
 /// A SPI clock that controls RAL LPSPI timing
-pub type SPIClock = crate::SPIClock<ral::lpspi::Instance>;
+pub type SPIClock = crate::SPIClock<ral::lpspi::RegisterBlock>;
 /// An I2C clock that contorls RAL LPI2C timing
-pub type I2CClock = crate::I2CClock<ral::lpi2c::Instance>;
+pub type I2CClock = crate::I2CClock<ral::lpi2c::RegisterBlock>;
 
 impl CCM {
     /// Converts the `imxrt-ral` CCM instance into the `CCM` driver
@@ -47,7 +47,7 @@ impl CCM {
     }
 }
 
-unsafe impl Instance for ral::dma0::Instance {
+unsafe impl Instance for ral::dma0::RegisterBlock {
     type Inst = DMA;
     #[inline(always)]
     fn instance(&self) -> DMA {
@@ -74,11 +74,11 @@ struct DMAClockGate;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that LPI2C instances are correct");
-unsafe impl Instance for ral::lpi2c::Instance {
+unsafe impl Instance for ral::lpi2c::RegisterBlock {
     type Inst = I2C;
     #[inline(always)]
     fn instance(&self) -> I2C {
-        match &**self as *const _ {
+        match &*self as *const _ {
             ral::lpi2c::LPI2C1 => I2C::I2C1,
             ral::lpi2c::LPI2C2 => I2C::I2C2,
             #[cfg(feature = "imxrt1060")]
@@ -110,11 +110,11 @@ unsafe impl Instance for ral::lpi2c::Instance {
 #[cfg(doctest)]
 struct I2CClockGate;
 
-unsafe impl Instance for ral::gpt::Instance {
+unsafe impl Instance for ral::gpt::RegisterBlock {
     type Inst = GPT;
     #[inline(always)]
     fn instance(&self) -> GPT {
-        match &**self as *const _ {
+        match &*self as *const _ {
             ral::gpt::GPT1 => GPT::GPT1,
             ral::gpt::GPT2 => GPT::GPT2,
             _ => unreachable!(),
@@ -143,7 +143,7 @@ unsafe impl Instance for ral::gpt::Instance {
 #[cfg(doctest)]
 struct GPTClockGate;
 
-unsafe impl Instance for ral::pit::Instance {
+unsafe impl Instance for ral::pit::RegisterBlock {
     type Inst = PIT;
     #[inline(always)]
     fn instance(&self) -> PIT {
@@ -171,11 +171,11 @@ struct PITClockGate;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that LPSPI instances are correct");
-unsafe impl Instance for ral::lpspi::Instance {
+unsafe impl Instance for ral::lpspi::RegisterBlock {
     type Inst = SPI;
     #[inline(always)]
     fn instance(&self) -> SPI {
-        match &**self as *const _ {
+        match &*self as *const _ {
             ral::lpspi::LPSPI1 => SPI::SPI1,
             ral::lpspi::LPSPI2 => SPI::SPI2,
             #[cfg(feature = "imxrt1060")]
@@ -208,11 +208,11 @@ struct SPIClockGate;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that LPUART instances are correct");
-unsafe impl Instance for ral::lpuart::Instance {
+unsafe impl Instance for ral::lpuart::RegisterBlock {
     type Inst = UART;
     #[inline(always)]
     fn instance(&self) -> UART {
-        match &**self as *const _ {
+        match &*self as *const _ {
             ral::lpuart::LPUART1 => UART::UART1,
             ral::lpuart::LPUART2 => UART::UART2,
             ral::lpuart::LPUART3 => UART::UART3,
@@ -257,11 +257,11 @@ use ral::adc1 as adc;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that ADC instances are correct");
-unsafe impl Instance for adc::Instance {
+unsafe impl Instance for adc::RegisterBlock {
     type Inst = ADC;
     #[inline(always)]
     fn instance(&self) -> ADC {
-        match &**self as *const _ {
+        match &*self as *const _ {
             adc::ADC1 => ADC::ADC1,
             #[cfg(feature = "imxrt1060")]
             adc::ADC2 => ADC::ADC2,
@@ -297,11 +297,11 @@ use ral::pwm1 as pwm;
 
 #[cfg(not(any(feature = "imxrt1010", feature = "imxrt1060")))]
 compile_error!("Ensure that PWM instances are correct");
-unsafe impl Instance for pwm::Instance {
+unsafe impl Instance for pwm::RegisterBlock {
     type Inst = PWM;
     #[inline(always)]
     fn instance(&self) -> PWM {
-        match &**self as *const _ {
+        match &*self as *const _ {
             pwm::PWM1 => PWM::PWM1,
             #[cfg(feature = "imxrt1060")]
             pwm::PWM2 => PWM::PWM2,
