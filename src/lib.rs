@@ -191,7 +191,7 @@ pub use perclock::{configure as configure_perclock, frequency as frequency_percl
 pub use spi::{configure as configure_spi, frequency as frequency_spi, SPI};
 pub use uart::{configure as configure_uart, frequency as frequency_uart, UART};
 
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ops::Deref};
 
 /// Describes the location of a clock gate field
 #[derive(Clone, Copy)]
@@ -295,7 +295,7 @@ pub unsafe trait Instance {
 /// Returns `Some(inst)` if `inst` is valid for this peripheral, or
 /// `None` if `inst` is not valid.
 #[inline(always)]
-fn check_instance<I: Instance>(inst: I::Inst) -> Option<I::Inst> {
+fn check_instance<I: Instance + ?Sized>(inst: I::Inst) -> Option<I::Inst> {
     Some(inst).filter(|inst| I::is_valid(*inst))
 }
 
@@ -322,7 +322,7 @@ impl ClockGateLocator for DMA {
 /// This modifies global, mutable memory that's owned by the `CCM`. Calling this
 /// function will let you change a clock gate setting for any peripheral instance.
 #[inline(always)]
-pub unsafe fn set_clock_gate<I: Instance>(inst: I::Inst, gate: ClockGate) {
+pub unsafe fn set_clock_gate<I: Instance + ?Sized>(inst: I::Inst, gate: ClockGate) {
     if let Some(inst) = check_instance::<I>(inst) {
         gate::set(&inst.location(), gate as u8)
     }
@@ -332,7 +332,7 @@ pub unsafe fn set_clock_gate<I: Instance>(inst: I::Inst, gate: ClockGate) {
 ///
 /// `get_clock_gate` returns `None` if the instance is invalid.
 #[inline(always)]
-pub fn get_clock_gate<I: Instance>(inst: I::Inst) -> Option<ClockGate> {
+pub fn get_clock_gate<I: Instance + ?Sized>(inst: I::Inst) -> Option<ClockGate> {
     check_instance::<I>(inst).map(|inst| {
         let raw = gate::get(&inst.location());
         ClockGate::from_u8(raw)
@@ -403,60 +403,66 @@ impl Handle {
     #[inline(always)]
     pub fn clock_gate_dma<D>(&self, dma: &D) -> ClockGate
     where
-        D: Instance<Inst = DMA>,
+        D: Deref,
+        D::Target: Instance<Inst = DMA>,
     {
         // Unwrap OK: we have the instance, or the `Instance`
         // implementation is incorrect.
-        get_clock_gate::<D>(dma.instance()).unwrap()
+        get_clock_gate::<D::Target>(dma.instance()).unwrap()
     }
 
     /// Set the clock gate for the DMA controller
     #[inline(always)]
     pub fn set_clock_gate_dma<D>(&mut self, dma: &mut D, gate: ClockGate)
     where
-        D: Instance<Inst = DMA>,
+        D: Deref,
+        D::Target: Instance<Inst = DMA>,
     {
-        unsafe { set_clock_gate::<D>(dma.instance(), gate) };
+        unsafe { set_clock_gate::<D::Target>(dma.instance(), gate) };
     }
 
     /// Returns the clock gate setting for the ADC
     #[inline(always)]
     pub fn clock_gate_adc<A>(&self, adc: &A) -> ClockGate
     where
-        A: Instance<Inst = ADC>,
+        A: Deref,
+        A::Target: Instance<Inst = ADC>,
     {
         // Unwrap OK: we have the instance, or the `Instance`
         // implementation is incorrect.
-        get_clock_gate::<A>(adc.instance()).unwrap()
+        get_clock_gate::<A::Target>(adc.instance()).unwrap()
     }
 
     /// Set the clock gate for the ADC peripheral
     #[inline(always)]
     pub fn set_clock_gate_adc<A>(&mut self, adc: &mut A, gate: ClockGate)
     where
-        A: Instance<Inst = ADC>,
+        A: Deref,
+        A::Target: Instance<Inst = ADC>,
     {
-        unsafe { set_clock_gate::<A>(adc.instance(), gate) }
+        unsafe { set_clock_gate::<A::Target>(adc.instance(), gate) }
     }
 
     /// Returns the clock gate setting for the ADC
     #[inline(always)]
     pub fn clock_gate_pwm<P>(&self, pwm: &P) -> ClockGate
     where
-        P: Instance<Inst = PWM>,
+        P: Deref,
+        P::Target: Instance<Inst = PWM>,
     {
         // Unwrap OK: we have the instance, or the `Instance`
         // implementation is incorrect.
-        get_clock_gate::<P>(pwm.instance()).unwrap()
+        get_clock_gate::<P::Target>(pwm.instance()).unwrap()
     }
 
     /// Set the clock gate for the PWM peripheral
     #[inline(always)]
     pub fn set_clock_gate_pwm<P>(&mut self, pwm: &mut P, gate: ClockGate)
     where
-        P: Instance<Inst = PWM>,
+        P: Deref,
+        P::Target: Instance<Inst = PWM>,
     {
-        unsafe { set_clock_gate::<P>(pwm.instance(), gate) }
+        unsafe { set_clock_gate::<P::Target>(pwm.instance(), gate) }
     }
 }
 
