@@ -66,8 +66,8 @@ unsafe impl Instance for ral::dma0::RegisterBlock {
 ///
 /// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut dma = DMA0::take().unwrap();
-/// handle.set_clock_gate_dma(&mut dma, ClockGate::On);
-/// handle.clock_gate_dma(&dma);
+/// handle.set_clock_gate_dma(&mut *dma, ClockGate::On);
+/// handle.clock_gate_dma(&*dma);
 /// ```
 #[cfg(doctest)]
 struct DMAClockGate;
@@ -284,8 +284,8 @@ unsafe impl Instance for adc::RegisterBlock {
 ///
 /// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut adc = ADC1::take().unwrap();
-/// handle.set_clock_gate_adc(&mut adc, ClockGate::On);
-/// handle.clock_gate_adc(&adc);
+/// handle.set_clock_gate_adc(&mut *adc, ClockGate::On);
+/// handle.clock_gate_adc(&*adc);
 /// ```
 #[cfg(doctest)]
 struct ADCClockGate;
@@ -329,8 +329,8 @@ unsafe impl Instance for pwm::RegisterBlock {
 ///
 /// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut pwm = PWM1::take().unwrap();
-/// handle.set_clock_gate_pwm(&mut pwm, ClockGate::On);
-/// handle.clock_gate_pwm(&pwm);
+/// handle.set_clock_gate_pwm(&mut *pwm, ClockGate::On);
+/// handle.clock_gate_pwm(&*pwm);
 /// ```
 #[cfg(doctest)]
 struct PWMClockGate;
