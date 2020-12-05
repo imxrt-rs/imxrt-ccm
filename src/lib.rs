@@ -370,9 +370,22 @@ impl ClockGateLocator for PWM {
 ///
 /// `Handle` also supports clock gating for peripherals that
 /// don't have an obvious clock root, like DMA.
-pub struct Handle(());
+pub struct Handle(PhantomData<*const ()>);
+
+unsafe impl Send for Handle {}
 
 impl Handle {
+    /// Create an instance to the CCM Handle
+    ///
+    /// # Safety
+    ///
+    /// The returned `Handle` may mutably alias another `Handle`.
+    /// Users should use a safer interface to acquire a [`CCM`],
+    /// which contains the `Handle` you should use.
+    pub const unsafe fn new() -> Self {
+        Handle(PhantomData)
+    }
+
     /// Returns the clock gate setting for the DMA controller
     #[inline(always)]
     pub fn clock_gate_dma<D>(&self, dma: &D) -> ClockGate
@@ -473,7 +486,7 @@ impl<P, G, U, S, I> CCM<P, G, U, S, I> {
     /// be aliased.
     pub const unsafe fn new() -> Self {
         CCM {
-            handle: Handle(()),
+            handle: Handle::new(),
             perclock: Disabled(PerClock::assume_enabled()),
             uart_clock: Disabled(UARTClock::assume_enabled()),
             spi_clock: Disabled(SPIClock::assume_enabled()),
