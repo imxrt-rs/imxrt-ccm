@@ -468,12 +468,14 @@ impl Handle {
     /// your programs.
     #[inline(always)]
     pub fn set_frequency_arm(hz: u32) -> (ARMClock, IPGClock) {
+        // Safety: we own the CCM peripheral memory
         unsafe { arm::set_frequency(hz) }
     }
 
     /// Returns the ARM and IPG clock frequencies
     #[inline(always)]
     pub fn frequency_arm() -> (ARMClock, IPGClock) {
+        // Safety: we own the CCM peripheral memory
         unsafe { arm::frequency() }
     }
 }

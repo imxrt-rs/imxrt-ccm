@@ -78,8 +78,13 @@ impl Register {
     #[inline(always)]
     pub fn divider(&self) -> u32 {
         // Safety: assumed valid through `new`, atomic read
-        let reg = unsafe { self.address.read_volatile() };
-        (reg & self.divider.mask) >> self.divider.offset
+        unsafe { self.divider.read(self.address) }
+    }
+    /// Returns the clock selection
+    #[inline(always)]
+    pub fn selection(&self) -> u32 {
+        // Safety: assumed valid through `new`, atomic read
+        unsafe { self.select.read(self.address) }
     }
 }
 
@@ -118,6 +123,16 @@ mod tests {
             let reg = Register::new(LPI2C_CLK_PODF, LPI2C_CLK_SEL, &mut reg);
             reg.set(3, 1);
             assert_eq!(reg.divider(), 3);
+        }
+    }
+
+    #[test]
+    fn selection() {
+        let mut reg = u32::max_value();
+        unsafe {
+            let reg = Register::new(LPI2C_CLK_PODF, LPI2C_CLK_SEL, &mut reg);
+            reg.set(3, 1);
+            assert_eq!(reg.selection(), 1);
         }
     }
 

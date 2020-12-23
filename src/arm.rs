@@ -26,7 +26,7 @@ use crate::register::Field;
 /// See [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm`)
 /// and [`Handle::frequency_arm`](crate::Handle::frequency_arm`) for safe
 /// mutators and accessors.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ARMClock(pub u32);
 /// The IPG clock frequency
 ///
@@ -36,7 +36,7 @@ pub struct ARMClock(pub u32);
 /// See [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm`)
 /// and [`Handle::frequency_arm`](crate::Handle::frequency_arm`) for safe
 /// mutators and accessors.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct IPGClock(pub u32);
 
 const CCM_CACCR: *mut u32 = 0x400F_C010 as _;
@@ -85,7 +85,7 @@ unsafe fn on_ahb_clk_oscillator<R>(func: impl FnOnce() -> R) -> R {
 
 /// ARM clock timings
 #[derive(PartialEq, Eq, Debug)]
-struct Timings {
+pub(crate) struct Timings {
     /// PLL_ARM DIV_SEL
     ///
     /// Valid range for divider value: 54-108. `Fout = Fin * div_select/2.0`
@@ -116,7 +116,7 @@ fn compute_arm_hz(div_arm: u32, div_ahb: u32, pll_arm_div_sel: u32) -> u32 {
 
 impl Timings {
     /// Returns a `Timings` that approximates the target ARM clock `arm_hz`
-    fn target(arm_hz: u32) -> Self {
+    pub(crate) fn target(arm_hz: u32) -> Self {
         let (mut div_arm, mut div_ahb) = (1, 1);
         while arm_hz * div_arm * div_ahb < 648_000_000 {
             if div_arm < 8 {
@@ -146,7 +146,7 @@ impl Timings {
     }
 
     /// Returns the IPG clock frequency described by these timings
-    fn ipg_hz(&self) -> u32 {
+    pub fn ipg_hz(&self) -> u32 {
         self.arm_hz / self.div_ipg
     }
 }
@@ -194,34 +194,43 @@ unsafe fn set_timings(timings: &Timings) {
     IPG_PODF.modify(CCM_CBCDR, timings.div_ipg.saturating_sub(1));
 }
 
-/// Returns the ARM timings read from the CCM peripheral
-///
-/// Assumes that the ARM clock was configured using this module's API.
-/// If the ARM clock is not running on PLL1, these timings may be meaningless.
-///
-/// # Safety
-///
-/// Reads global, mutable memory.
-#[inline(always)]
-unsafe fn timings() -> Timings {
-    timings_(CCM_CACCR, CCM_CBCDR, CCM_ANALOG_PLL_ARM)
+/// ARM timing context
+pub(crate) struct Context<'a> {
+    caccr: *mut u32,
+    cbcdr: *mut u32,
+    pll_arm: *mut u32,
+    _scope: core::marker::PhantomData<&'a mut ()>,
 }
 
-#[inline(always)]
-unsafe fn timings_(caccr: *const u32, cbcdr: *const u32, pll_arm: *const u32) -> Timings {
-    let div_arm = ARM_PODF.read(caccr) + 1;
-    let div_ahb = AHB_PODF.read(cbcdr) + 1;
-    let div_ipg = IPG_PODF.read(cbcdr) + 1;
-    let pll_arm_div_sel = DIV_SEL.read(pll_arm);
-    let arm_hz = compute_arm_hz(div_arm, div_ahb, pll_arm_div_sel);
-    Timings {
-        div_arm,
-        div_ahb,
-        pll_arm_div_sel,
-        arm_hz,
-        div_ipg,
+impl Context<'_> {
+    /// Reads the timings from the context
+    ///
+    /// # Safety
+    ///
+    /// Assumes that the context memory is valid
+    pub unsafe fn timings(&self) -> Timings {
+        let div_arm = ARM_PODF.read(self.caccr) + 1;
+        let div_ahb = AHB_PODF.read(self.cbcdr) + 1;
+        let div_ipg = IPG_PODF.read(self.cbcdr) + 1;
+        let pll_arm_div_sel = DIV_SEL.read(self.pll_arm);
+        let arm_hz = compute_arm_hz(div_arm, div_ahb, pll_arm_div_sel);
+        Timings {
+            div_arm,
+            div_ahb,
+            pll_arm_div_sel,
+            arm_hz,
+            div_ipg,
+        }
     }
 }
+
+/// The context of the embedded ARM system
+pub(crate) const ARM_CONTEXT: Context<'static> = Context {
+    caccr: CCM_CACCR,
+    cbcdr: CCM_CBCDR,
+    pll_arm: CCM_ANALOG_PLL_ARM,
+    _scope: core::marker::PhantomData,
+};
 
 /// Set the ARM clock frequency, returning the ARM and IPG clock speeds
 ///
@@ -263,13 +272,45 @@ pub unsafe fn set_frequency(hz: u32) -> (ARMClock, IPGClock) {
 /// Reads multiple CCM registers without synchronization. It's safer to use
 /// [`Handle::frequency_arm`](crate::Handle::frequency_arm) to read the frequencies.
 pub unsafe fn frequency() -> (ARMClock, IPGClock) {
-    let timings = timings();
+    let timings = ARM_CONTEXT.timings();
     (ARMClock(timings.arm_hz), IPGClock(timings.ipg_hz()))
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{timings_, Timings};
+pub mod tests {
+    use super::{Context, Timings};
+
+    pub(crate) struct TestContext {
+        pub caccr: u32,
+        pub cbcdr: u32,
+        pub pll_arm: u32,
+    }
+
+    impl TestContext {
+        pub const fn new() -> Self {
+            TestContext {
+                caccr: 0,
+                cbcdr: 0,
+                pll_arm: 0,
+            }
+        }
+        pub fn context(&mut self) -> Context<'_> {
+            Context {
+                caccr: &mut self.caccr,
+                cbcdr: &mut self.cbcdr,
+                pll_arm: &mut self.pll_arm,
+                _scope: core::marker::PhantomData,
+            }
+        }
+        pub fn from_timings(timings: &Timings) -> Self {
+            TestContext {
+                caccr: timings.div_arm.saturating_sub(1),
+                cbcdr: timings.div_ahb.saturating_sub(1) << 10
+                    | timings.div_ipg.saturating_sub(1) << 8,
+                pll_arm: timings.pll_arm_div_sel,
+            }
+        }
+    }
 
     #[test]
     fn imxrt1060_target_freq() {
@@ -285,12 +326,9 @@ mod tests {
     #[test]
     fn imxrt1060_frequency() {
         let expected = Timings::target(600_000_000);
-        let caccr = expected.div_arm.saturating_sub(1);
-        let cbcdr =
-            expected.div_ahb.saturating_sub(1) << 10 | expected.div_ipg.saturating_sub(1) << 8;
-        let pll_arm = expected.pll_arm_div_sel;
+        let mut ctx = TestContext::from_timings(&expected);
 
-        let actual = unsafe { timings_(&caccr, &cbcdr, &pll_arm) };
+        let actual = unsafe { ctx.context().timings() };
         assert_eq!(actual, expected);
     }
 }
