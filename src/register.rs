@@ -18,6 +18,27 @@ impl Field {
             mask: mask << offset,
         }
     }
+
+    /// Clear the field in `mem`, and write `value` in its place
+    #[inline(always)]
+    pub unsafe fn modify(&self, mem: *mut u32, value: u32) {
+        let mut v = mem.read_volatile();
+        v &= !self.mask;
+        v |= (value << self.offset) & self.mask;
+        mem.write_volatile(v);
+    }
+
+    /// Write `value` into `mem`, setting all other fields to zero
+    #[inline(always)]
+    pub unsafe fn write_zero(&self, mem: *mut u32, value: u32) {
+        mem.write_volatile((value << self.offset) & self.mask)
+    }
+
+    /// Read the field from `mem`
+    #[inline(always)]
+    pub unsafe fn read(&self, mem: *const u32) -> u32 {
+        (mem.read_volatile() & self.mask) >> self.offset
+    }
 }
 
 /// A CCM register
@@ -98,5 +119,15 @@ mod tests {
             reg.set(3, 1);
             assert_eq!(reg.divider(), 3);
         }
+    }
+
+    #[test]
+    fn modify() {
+        let mut mem = 0;
+        unsafe { LPI2C_CLK_PODF.modify(&mut mem, u32::max_value()) };
+        assert_eq!(mem, 0x3f << 19);
+        mem = 0;
+        unsafe { LPI2C_CLK_SEL.modify(&mut mem, u32::max_value()) };
+        assert!(mem.is_power_of_two());
     }
 }

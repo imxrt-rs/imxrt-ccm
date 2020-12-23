@@ -176,6 +176,7 @@ macro_rules! assert_not_sync {
     };
 }
 
+mod arm;
 mod gate;
 mod i2c;
 mod perclock;
@@ -186,6 +187,7 @@ mod uart;
 #[cfg(feature = "imxrt-ral")]
 pub mod ral;
 
+pub use arm::{frequency as frequency_arm, set_frequency as set_frequency_arm, ARMClock, IPGClock};
 pub use i2c::{configure as configure_i2c, frequency as frequency_i2c, I2C};
 pub use perclock::{configure as configure_perclock, frequency as frequency_perclk, GPT, PIT};
 pub use spi::{configure as configure_spi, frequency as frequency_spi, SPI};
@@ -457,6 +459,22 @@ impl Handle {
         P: Instance<Inst = PWM>,
     {
         unsafe { set_clock_gate::<P>(pwm.instance(), gate) }
+    }
+
+    /// Set the ARM clock frequency, returning the new ARM and IPG clock frequency
+    //
+    /// Changing this at runtime will affect anything that's using the ARM or IPG clocks
+    /// as inputs. Keep this in mind when changing the core clock frequency throughout
+    /// your programs.
+    #[inline(always)]
+    pub fn set_frequency_arm(hz: u32) -> (ARMClock, IPGClock) {
+        unsafe { arm::set_frequency(hz) }
+    }
+
+    /// Returns the ARM and IPG clock frequencies
+    #[inline(always)]
+    pub fn frequency_arm() -> (ARMClock, IPGClock) {
+        unsafe { arm::frequency() }
     }
 }
 
