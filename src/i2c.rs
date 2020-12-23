@@ -128,11 +128,11 @@ const CSCDR2: Register =
 /// safer interface.
 #[inline(always)]
 pub unsafe fn configure(divider: u32) {
-    configure_(divider, CSCDR2);
+    configure_(divider, &CSCDR2);
 }
 
 #[inline(always)]
-unsafe fn configure_(divider: u32, reg: Register) {
+unsafe fn configure_(divider: u32, reg: &Register) {
     const OSCILLATOR: u32 = 1;
     reg.set(divider.min(64).max(1).saturating_sub(1), OSCILLATOR);
 }
@@ -140,11 +140,11 @@ unsafe fn configure_(divider: u32, reg: Register) {
 /// Returns the I2C clock frequency
 #[inline(always)]
 pub fn frequency() -> u32 {
-    frequency_(CSCDR2)
+    frequency_(&CSCDR2)
 }
 
 #[inline(always)]
-fn frequency_(reg: Register) -> u32 {
+fn frequency_(reg: &Register) -> u32 {
     let divider = reg.divider() + 1;
     CLOCK_FREQUENCY_HZ / divider
 }
@@ -165,8 +165,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(65, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 64);
+            configure_(65, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ / 64);
         }
     }
 
@@ -175,8 +175,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(0, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ);
+            configure_(0, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ);
         }
     }
 
@@ -185,8 +185,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(7, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 7);
+            configure_(7, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ / 7);
         }
     }
 }

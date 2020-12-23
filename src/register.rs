@@ -42,7 +42,6 @@ impl Field {
 }
 
 /// A CCM register
-#[derive(Clone, Copy)]
 pub struct Register {
     /// The clock divider field
     divider: Field,

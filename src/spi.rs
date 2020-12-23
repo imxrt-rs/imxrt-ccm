@@ -123,11 +123,11 @@ const CBCMR: Register = unsafe { Register::new(LPSPI_PODF, LPSPI_SEL, 0x400F_C01
 /// safer interface.
 #[inline(always)]
 pub unsafe fn configure(divider: u32) {
-    configure_(divider, CBCMR);
+    configure_(divider, &CBCMR);
 }
 
 #[inline(always)]
-unsafe fn configure_(divider: u32, reg: Register) {
+unsafe fn configure_(divider: u32, reg: &Register) {
     const PLL2: u32 = 2; // Consistent for 1062, 1011 chips
     #[cfg(not(feature = "imxrt1010"))]
     const MAX_DIVIDER: u32 = 8;
@@ -140,11 +140,11 @@ unsafe fn configure_(divider: u32, reg: Register) {
 /// Returns the SPI clock frequency
 #[inline(always)]
 pub fn frequency() -> u32 {
-    frequency_(CBCMR)
+    frequency_(&CBCMR)
 }
 
 #[inline(always)]
-fn frequency_(reg: Register) -> u32 {
+fn frequency_(reg: &Register) -> u32 {
     let divider = reg.divider() + 1;
     CLOCK_FREQUENCY_HZ / divider
 }
@@ -164,8 +164,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(9, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 8);
+            configure_(9, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ / 8);
         }
     }
 
@@ -175,8 +175,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(17, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 16);
+            configure_(17, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ / 16);
         }
     }
 
@@ -185,8 +185,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(0, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ);
+            configure_(0, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ);
         }
     }
 
@@ -195,8 +195,8 @@ mod tests {
         let mut mem: u32 = 0;
         unsafe {
             let reg = register(&mut mem);
-            configure_(7, reg);
-            assert_eq!(frequency_(reg), CLOCK_FREQUENCY_HZ / 7);
+            configure_(7, &reg);
+            assert_eq!(frequency_(&reg), CLOCK_FREQUENCY_HZ / 7);
         }
     }
 }
