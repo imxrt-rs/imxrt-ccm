@@ -2,7 +2,7 @@
 
 #![cfg(feature = "imxrt-ral")]
 
-use imxrt_ccm::*;
+use imxrt_ccm::{perclock::*, *};
 use imxrt_ral as ral;
 
 const IMXRT1060: bool = cfg!(feature = "imxrt1060");

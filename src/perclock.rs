@@ -1,12 +1,30 @@
-//! Periodic clock implementations
+//! Periodic clock
 
-use super::{
-    arm, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance, PerClock,
-};
+use super::{arm, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance};
 use crate::{
     register::{Field, Register},
     OSCILLATOR_FREQUENCY_HZ,
 };
+
+use core::marker::PhantomData;
+
+/// The periodic clock root
+///
+/// `PerClock` is the input clock for GPT and PIT.
+pub struct PerClock<P, G>(PhantomData<(P, G)>);
+
+impl<P, G> PerClock<P, G> {
+    /// Assume that the clock is enabled, and acquire the enabled clock
+    ///
+    /// # Safety
+    ///
+    /// This may create an alias to memory that is mutably owned by another instance.
+    /// Users should only `assume_enabled` when configuring clocks through another
+    /// API.
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
+    }
+}
 
 /// Peripheral instance identifier for GPT
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

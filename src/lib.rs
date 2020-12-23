@@ -179,7 +179,7 @@ macro_rules! assert_not_sync {
 mod arm;
 mod gate;
 mod i2c;
-mod perclock;
+pub mod perclock;
 mod register;
 mod spi;
 mod uart;
@@ -189,7 +189,6 @@ pub mod ral;
 
 pub use arm::{frequency as frequency_arm, set_frequency as set_frequency_arm, ARMClock, IPGClock};
 pub use i2c::{configure as configure_i2c, frequency as frequency_i2c, I2C};
-pub use perclock::{configure as configure_perclock, frequency as frequency_perclk, GPT, PIT};
 pub use spi::{configure as configure_spi, frequency as frequency_spi, SPI};
 pub use uart::{configure as configure_uart, frequency as frequency_uart, UART};
 
@@ -222,9 +221,9 @@ mod private {
     impl Sealed for super::ADC {}
     impl Sealed for super::DCDC {}
     impl Sealed for super::DMA {}
-    impl Sealed for super::GPT {}
+    impl Sealed for super::perclock::GPT {}
     impl Sealed for super::I2C {}
-    impl Sealed for super::PIT {}
+    impl Sealed for super::perclock::PIT {}
     impl Sealed for super::PWM {}
     impl Sealed for super::SPI {}
     impl Sealed for super::UART {}
@@ -244,7 +243,7 @@ mod private {
 /// timer.
 ///
 /// ```
-/// # use imxrt_ccm::{Instance, GPT};
+/// # use imxrt_ccm::{Instance, perclock::GPT};
 /// struct MyGPT;
 /// unsafe impl Instance for MyGPT {
 ///     type Inst = GPT;
@@ -263,7 +262,7 @@ mod private {
 /// If `is_valid` returned `false` when called with `GPT::GPT1`, the implementation is invalid.
 ///
 /// ```should_panic
-/// # use imxrt_ccm::{Instance, GPT};
+/// # use imxrt_ccm::{Instance, perclock::GPT};
 /// # struct MyGPT;
 /// unsafe impl Instance for MyGPT {
 ///     type Inst = GPT;
@@ -527,7 +526,7 @@ pub struct CCM<P, G, U, S, I> {
     /// The periodic clock handle
     ///
     /// `perclock` is used for timers, including GPT and PIT timers
-    pub perclock: Disabled<PerClock<P, G>>,
+    pub perclock: Disabled<perclock::PerClock<P, G>>,
     /// The UART clock
     ///
     /// `uart_clock` is for UART peripherals.
@@ -554,7 +553,7 @@ impl<P, G, U, S, I> CCM<P, G, U, S, I> {
     pub const unsafe fn new() -> Self {
         CCM {
             handle: Handle::new(),
-            perclock: Disabled(PerClock::assume_enabled()),
+            perclock: Disabled(perclock::PerClock::assume_enabled()),
             uart_clock: Disabled(UARTClock::assume_enabled()),
             spi_clock: Disabled(SPIClock::assume_enabled()),
             i2c_clock: Disabled(I2CClock::assume_enabled()),
@@ -595,24 +594,6 @@ const OSCILLATOR_FREQUENCY_HZ: u32 = 24_000_000;
 ///
 /// Call `enable` on your instance to enable the clock.
 pub struct Disabled<Clock>(Clock);
-
-/// The periodic clock root
-///
-/// `PerClock` is the input clock for GPT and PIT.
-pub struct PerClock<P, G>(PhantomData<(P, G)>);
-
-impl<P, G> PerClock<P, G> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
-        Self(PhantomData)
-    }
-}
 
 /// The UART clock
 ///

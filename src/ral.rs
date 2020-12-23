@@ -6,7 +6,10 @@
 //! The functions in this module are the same as the `clock_gate_*` functions
 //! in the library root, but they inline the RAL instance.
 
-use crate::{Instance, ADC, DCDC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
+use crate::{
+    perclock::{GPT, PIT},
+    Instance, ADC, DCDC, DMA, I2C, PWM, SPI, UART,
+};
 use imxrt_ral as ral;
 
 /// Helper for a clock control module designed to the
@@ -20,7 +23,7 @@ pub type CCM = crate::CCM<
 >;
 
 /// A periodic clock that controls RAL PIT and GPT timings
-pub type PerClock = crate::PerClock<ral::pit::Instance, ral::gpt::Instance>;
+pub type PerClock = crate::perclock::PerClock<ral::pit::Instance, ral::gpt::Instance>;
 /// A UART clock that controls RAL LPUART timing
 pub type UARTClock = crate::UARTClock<ral::lpuart::Instance>;
 /// A SPI clock that controls RAL LPSPI timing
