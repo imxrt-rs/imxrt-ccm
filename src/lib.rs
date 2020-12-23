@@ -501,14 +501,14 @@ impl Handle {
     /// as inputs. Keep this in mind when changing the core clock frequency throughout
     /// your programs.
     #[inline(always)]
-    pub fn set_frequency_arm(hz: u32) -> (ARMClock, IPGClock) {
+    pub fn set_frequency_arm(&mut self, hz: u32) -> (ARMClock, IPGClock) {
         // Safety: we own the CCM peripheral memory
         unsafe { arm::set_frequency(hz) }
     }
 
     /// Returns the ARM and IPG clock frequencies
     #[inline(always)]
-    pub fn frequency_arm() -> (ARMClock, IPGClock) {
+    pub fn frequency_arm(&self) -> (ARMClock, IPGClock) {
         // Safety: we own the CCM peripheral memory
         unsafe { arm::frequency() }
     }
