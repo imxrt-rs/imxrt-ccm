@@ -220,6 +220,7 @@ pub trait ClockGateLocator: Copy + PartialEq + private::Sealed {
 mod private {
     pub trait Sealed {}
     impl Sealed for super::ADC {}
+    impl Sealed for super::DCDC {}
     impl Sealed for super::DMA {}
     impl Sealed for super::GPT {}
     impl Sealed for super::I2C {}
@@ -299,6 +300,19 @@ pub unsafe trait Instance {
 #[inline(always)]
 fn check_instance<I: Instance>(inst: I::Inst) -> Option<I::Inst> {
     Some(inst).filter(|inst| I::is_valid(*inst))
+}
+
+/// Peripheral instance identifier for DCDC
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DCDC;
+
+impl ClockGateLocator for DCDC {
+    fn location(&self) -> ClockGateLocation {
+        ClockGateLocation {
+            offset: 6,
+            gates: &[3],
+        }
+    }
 }
 
 /// Peripheral instance identifier for DMA
@@ -399,6 +413,26 @@ impl Handle {
     /// which contains the `Handle` you should use.
     pub const unsafe fn new() -> Self {
         Handle(PhantomData)
+    }
+
+    /// Returns the clock gate setting for the DCDC buck converter
+    #[inline(always)]
+    pub fn clock_gate_dcdc<D>(&self, dcdc: &D) -> ClockGate
+    where
+        D: Instance<Inst = DCDC>,
+    {
+        // Unwrap OK: we have the instance, or the `Instance`
+        // implementation is incorrect.
+        get_clock_gate::<D>(dcdc.instance()).unwrap()
+    }
+
+    /// Set the clock gate for the DCDC buck converter
+    #[inline(always)]
+    pub fn set_clock_gate_dcdc<D>(&mut self, dcdc: &mut D, gate: ClockGate)
+    where
+        D: Instance<Inst = DCDC>,
+    {
+        unsafe { set_clock_gate::<D>(dcdc.instance(), gate) };
     }
 
     /// Returns the clock gate setting for the DMA controller

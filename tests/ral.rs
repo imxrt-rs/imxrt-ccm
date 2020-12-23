@@ -8,6 +8,11 @@ use imxrt_ral as ral;
 const IMXRT1060: bool = cfg!(feature = "imxrt1060");
 
 #[test]
+fn dcdc_is_valid() {
+    assert!(ral::dcdc::Instance::is_valid(DCDC));
+}
+
+#[test]
 fn dma_is_valid() {
     assert!(ral::dma0::Instance::is_valid(DMA));
 }

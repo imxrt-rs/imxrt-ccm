@@ -6,7 +6,7 @@
 //! The functions in this module are the same as the `clock_gate_*` functions
 //! in the library root, but they inline the RAL instance.
 
-use crate::{Instance, ADC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
+use crate::{Instance, ADC, DCDC, DMA, GPT, I2C, PIT, PWM, SPI, UART};
 use imxrt_ral as ral;
 
 /// Helper for a clock control module designed to the
@@ -46,6 +46,31 @@ impl CCM {
         unsafe { crate::CCM::new() }
     }
 }
+
+unsafe impl Instance for ral::dcdc::Instance {
+    type Inst = DCDC;
+    #[inline(always)]
+    fn instance(&self) -> DCDC {
+        DCDC
+    }
+    #[inline(always)]
+    fn is_valid(_: DCDC) -> bool {
+        true
+    }
+}
+
+/// ```no_run
+/// use imxrt_ccm::{CCM, ClockGate};
+/// use imxrt_ral::ccm;
+/// use imxrt_ral::dcdc::DCDC;
+///
+/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut dcdc = DCDC::take().unwrap();
+/// handle.set_clock_gate_dcdc(&mut dcdc, ClockGate::On);
+/// handle.clock_gate_dcdc(&dcdc);
+/// ```
+#[cfg(doctest)]
+struct DCDCClockGate;
 
 unsafe impl Instance for ral::dma0::Instance {
     type Inst = DMA;
