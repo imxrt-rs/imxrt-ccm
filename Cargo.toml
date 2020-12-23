@@ -21,3 +21,7 @@ imxrt1060 = []
 
 [dev-dependencies]
 static_assertions = "1.1"
+
+[patch.crates-io.imxrt-ral]
+git = "https://github.com/imxrt-rs/imxrt-ral"
+branch = "typenum-instances"
