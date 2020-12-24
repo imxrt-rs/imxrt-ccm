@@ -2,6 +2,10 @@
 
 Clock Control Module (CCM) driver for i.MX RT processors.
 
+#### [API Docs (main branch)][main-api-docs]
+
+[main-api-docs]: https://imxrt-rs.github.io/imxrt-ccm/
+
 `imxrt-ccm` is a lower-level Rust driver. It helps you
 
 - configure processor clocks
