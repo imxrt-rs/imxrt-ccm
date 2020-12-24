@@ -1,11 +1,30 @@
 //! SPI clock control
 
-use super::{ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance, SPIClock};
+use super::{ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance};
 use crate::register::{Field, Register};
+use core::marker::PhantomData;
 
 const DEFAULT_CLOCK_DIVIDER: u32 = 5;
 /// SPI clock frequency (Hz)
 const CLOCK_FREQUENCY_HZ: u32 = 528_000_000;
+
+/// The SPI clock
+///
+/// The SPI clock is based on PLL2.
+pub struct SPIClock<S>(PhantomData<S>);
+
+impl<S> SPIClock<S> {
+    /// Assume that the clock is enabled, and acquire the enabled clock
+    ///
+    /// # Safety
+    ///
+    /// This may create an alias to memory that is mutably owned by another instance.
+    /// Users should only `assume_enabled` when configuring clocks through another
+    /// API.
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
+    }
+}
 
 impl<S> Disabled<SPIClock<S>>
 where

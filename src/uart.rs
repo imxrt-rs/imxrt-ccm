@@ -2,13 +2,31 @@
 
 use super::{
     set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
-    UARTClock,
 };
 use crate::register::{Field, Register};
+use core::marker::PhantomData;
 
 /// UART clock frequency (Hz)
 const CLOCK_FREQUENCY_HZ: u32 = super::OSCILLATOR_FREQUENCY_HZ;
 const DEFAULT_CLOCK_DIVIDER: u32 = 1;
+
+/// The UART clock
+///
+/// The UART clock is based on the crystal oscillator.
+pub struct UARTClock<C>(PhantomData<C>);
+
+impl<C> UARTClock<C> {
+    /// Assume that the clock is enabled, and acquire the enabled clock
+    ///
+    /// # Safety
+    ///
+    /// This may create an alias to memory that is mutably owned by another instance.
+    /// Users should only `assume_enabled` when configuring clocks through another
+    /// API.
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
+    }
+}
 
 impl<U> Disabled<UARTClock<U>>
 where

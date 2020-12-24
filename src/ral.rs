@@ -2,13 +2,13 @@
 //!
 //! Use [`CCM::from_ral`](../struct.CCM.html#from_ral) to safely
 //! acquire the CCM handle and clock roots.
-//!
-//! The functions in this module are the same as the `clock_gate_*` functions
-//! in the library root, but they inline the RAL instance.
 
 use crate::{
+    i2c::I2C,
     perclock::{GPT, PIT},
-    Instance, ADC, DCDC, DMA, I2C, PWM, SPI, UART,
+    spi::SPI,
+    uart::UART,
+    Instance, ADC, DCDC, DMA, PWM,
 };
 use imxrt_ral as ral;
 
@@ -25,11 +25,11 @@ pub type CCM = crate::CCM<
 /// A periodic clock that controls RAL PIT and GPT timings
 pub type PerClock = crate::perclock::PerClock<ral::pit::Instance, ral::gpt::Instance>;
 /// A UART clock that controls RAL LPUART timing
-pub type UARTClock = crate::UARTClock<ral::lpuart::Instance>;
+pub type UARTClock = crate::uart::UARTClock<ral::lpuart::Instance>;
 /// A SPI clock that controls RAL LPSPI timing
-pub type SPIClock = crate::SPIClock<ral::lpspi::Instance>;
+pub type SPIClock = crate::spi::SPIClock<ral::lpspi::Instance>;
 /// An I2C clock that contorls RAL LPI2C timing
-pub type I2CClock = crate::I2CClock<ral::lpi2c::Instance>;
+pub type I2CClock = crate::i2c::I2CClock<ral::lpi2c::Instance>;
 
 impl CCM {
     /// Converts the `imxrt-ral` CCM instance into the `CCM` driver

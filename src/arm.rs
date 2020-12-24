@@ -151,7 +151,7 @@ impl Timings {
     }
 }
 
-pub const CCM_ANALOG_PLL_ARM: *mut u32 = 0x400D_8000 as _;
+const CCM_ANALOG_PLL_ARM: *mut u32 = 0x400D_8000 as _;
 
 const DIV_SEL: Field = Field::new(0, 0x7f);
 
@@ -265,7 +265,7 @@ pub unsafe fn set_frequency(hz: u32) -> (ARMClock, IPGClock) {
 ///
 /// The function assumes that the ARM clock runs on PLL1.
 /// The clock values may be incorrect until after the first call to
-/// [`set_frequency_arm`](crate::set_frequency_arm).
+/// [`set_frequency`].
 ///
 /// # Safety
 ///

@@ -35,24 +35,24 @@
 //! }
 //!
 //! unsafe impl ccm::Instance for I2C {
-//!     type Inst = ccm::I2C;
+//!     type Inst = ccm::i2c::I2C;
 //!     fn instance(&self) -> Self::Inst {
 //!         match self.instance_id {
-//!             1 => ccm::I2C::I2C1,
-//!             2 => ccm::I2C::I2C2,
+//!             1 => ccm::i2c::I2C::I2C1,
+//!             2 => ccm::i2c::I2C::I2C2,
 //!             #[cfg(feature = "imxrt1060")]
-//!             3 => ccm::I2C::I2C3,
+//!             3 => ccm::i2c::I2C::I2C3,
 //!             #[cfg(feature = "imxrt1060")]
-//!             4 => ccm::I2C::I2C4,
+//!             4 => ccm::i2c::I2C::I2C4,
 //!             _ => unreachable!()
 //!         }
 //!     }
 //!     fn is_valid(inst: Self::Inst) -> bool {
 //!         #[allow(unreachable_patterns)]
 //!         match inst {
-//!             ccm::I2C::I2C1 | ccm::I2C::I2C2 => true,
+//!             ccm::i2c::I2C::I2C1 | ccm::i2c::I2C::I2C2 => true,
 //!             #[cfg(feature = "imxrt1060")]
-//!             ccm::I2C::I2C3 | ccm::I2C::I2C4 => true,
+//!             ccm::i2c::I2C::I2C3 | ccm::i2c::I2C::I2C4 => true,
 //!             _ => false,
 //!         }
 //!     }
@@ -88,24 +88,24 @@
 //! # }
 //! #
 //! # unsafe impl ccm::Instance for I2C {
-//! #     type Inst = ccm::I2C;
+//! #     type Inst = ccm::i2c::I2C;
 //! #     fn instance(&self) -> Self::Inst {
 //! #         match self.instance_id {
-//! #             1 => ccm::I2C::I2C1,
-//! #             2 => ccm::I2C::I2C2,
+//! #             1 => ccm::i2c::I2C::I2C1,
+//! #             2 => ccm::i2c::I2C::I2C2,
 //! #             #[cfg(feature = "imxrt1060")]
-//! #             3 => ccm::I2C::I2C3,
+//! #             3 => ccm::i2c::I2C::I2C3,
 //! #             #[cfg(feature = "imxrt1060")]
-//! #             4 => ccm::I2C::I2C4,
+//! #             4 => ccm::i2c::I2C::I2C4,
 //! #             _ => unreachable!()
 //! #         }
 //! #     }
 //! #     fn is_valid(inst: Self::Inst) -> bool {
 //! #         #[allow(unreachable_patterns)]
 //! #         match inst {
-//! #             ccm::I2C::I2C1 | ccm::I2C::I2C2 => true,
+//! #             ccm::i2c::I2C::I2C1 | ccm::i2c::I2C::I2C2 => true,
 //! #             #[cfg(feature = "imxrt1060")]
-//! #             ccm::I2C::I2C3 | ccm::I2C::I2C4 => true,
+//! #             ccm::i2c::I2C::I2C3 | ccm::i2c::I2C::I2C4 => true,
 //! #             _ => false,
 //! #         }
 //! #     }
@@ -116,7 +116,7 @@
 //! }
 //!
 //! impl I2CDriver {
-//!     pub fn new(inst: I2C, clock: &ccm::I2CClock<I2C>) -> I2CDriver {
+//!     pub fn new(inst: I2C, clock: &ccm::i2c::I2CClock<I2C>) -> I2CDriver {
 //!         // ...
 //!         I2CDriver {
 //!             inst,
@@ -127,7 +127,7 @@
 //!
 //! let mut i2c3 = // Get I2C3 instance...
 //!     # I2C { instance_id: 3 };
-//! # let mut i2c_clock = unsafe { ccm::I2CClock::<I2C>::assume_enabled() };
+//! # let mut i2c_clock = unsafe { ccm::i2c::I2CClock::<I2C>::assume_enabled() };
 //! // Enable I2C3 clock gate
 //! i2c_clock.set_clock_gate(&mut i2c3, ccm::ClockGate::On);
 //! // Create the higher-level driver, requires the I2C clock
@@ -176,21 +176,16 @@ macro_rules! assert_not_sync {
     };
 }
 
-mod arm;
+pub mod arm;
 mod gate;
-mod i2c;
+pub mod i2c;
 pub mod perclock;
 mod register;
-mod spi;
-mod uart;
+pub mod spi;
+pub mod uart;
 
 #[cfg(feature = "imxrt-ral")]
 pub mod ral;
-
-pub use arm::{frequency as frequency_arm, set_frequency as set_frequency_arm, ARMClock, IPGClock};
-pub use i2c::{configure as configure_i2c, frequency as frequency_i2c, I2C};
-pub use spi::{configure as configure_spi, frequency as frequency_spi, SPI};
-pub use uart::{configure as configure_uart, frequency as frequency_uart, UART};
 
 use core::marker::PhantomData;
 
@@ -222,11 +217,11 @@ mod private {
     impl Sealed for super::DCDC {}
     impl Sealed for super::DMA {}
     impl Sealed for super::perclock::GPT {}
-    impl Sealed for super::I2C {}
+    impl Sealed for super::i2c::I2C {}
     impl Sealed for super::perclock::PIT {}
     impl Sealed for super::PWM {}
-    impl Sealed for super::SPI {}
-    impl Sealed for super::UART {}
+    impl Sealed for super::spi::SPI {}
+    impl Sealed for super::uart::UART {}
 }
 
 /// A peripheral instance that has a clock gate
@@ -500,14 +495,14 @@ impl Handle {
     /// as inputs. Keep this in mind when changing the core clock frequency throughout
     /// your programs.
     #[inline(always)]
-    pub fn set_frequency_arm(&mut self, hz: u32) -> (ARMClock, IPGClock) {
+    pub fn set_frequency_arm(&mut self, hz: u32) -> (arm::ARMClock, arm::IPGClock) {
         // Safety: we own the CCM peripheral memory
         unsafe { arm::set_frequency(hz) }
     }
 
     /// Returns the ARM and IPG clock frequencies
     #[inline(always)]
-    pub fn frequency_arm(&self) -> (ARMClock, IPGClock) {
+    pub fn frequency_arm(&self) -> (arm::ARMClock, arm::IPGClock) {
         // Safety: we own the CCM peripheral memory
         unsafe { arm::frequency() }
     }
@@ -530,15 +525,15 @@ pub struct CCM<P, G, U, S, I> {
     /// The UART clock
     ///
     /// `uart_clock` is for UART peripherals.
-    pub uart_clock: Disabled<UARTClock<U>>,
+    pub uart_clock: Disabled<uart::UARTClock<U>>,
     /// The SPI clock
     ///
     /// `spi_clock` is for SPI peripherals.
-    pub spi_clock: Disabled<SPIClock<S>>,
+    pub spi_clock: Disabled<spi::SPIClock<S>>,
     /// The I2C clock
     ///
     /// `i2c_clock` is for I2C peripherals.
-    pub i2c_clock: Disabled<I2CClock<I>>,
+    pub i2c_clock: Disabled<i2c::I2CClock<I>>,
 }
 
 impl<P, G, U, S, I> CCM<P, G, U, S, I> {
@@ -554,9 +549,9 @@ impl<P, G, U, S, I> CCM<P, G, U, S, I> {
         CCM {
             handle: Handle::new(),
             perclock: Disabled(perclock::PerClock::assume_enabled()),
-            uart_clock: Disabled(UARTClock::assume_enabled()),
-            spi_clock: Disabled(SPIClock::assume_enabled()),
-            i2c_clock: Disabled(I2CClock::assume_enabled()),
+            uart_clock: Disabled(uart::UARTClock::assume_enabled()),
+            spi_clock: Disabled(spi::SPIClock::assume_enabled()),
+            i2c_clock: Disabled(i2c::I2CClock::assume_enabled()),
         }
     }
 }
@@ -594,60 +589,6 @@ const OSCILLATOR_FREQUENCY_HZ: u32 = 24_000_000;
 ///
 /// Call `enable` on your instance to enable the clock.
 pub struct Disabled<Clock>(Clock);
-
-/// The UART clock
-///
-/// The UART clock is based on the crystal oscillator.
-pub struct UARTClock<C>(PhantomData<C>);
-
-impl<C> UARTClock<C> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
-        Self(PhantomData)
-    }
-}
-
-/// The SPI clock
-///
-/// The SPI clock is based on PLL2.
-pub struct SPIClock<S>(PhantomData<S>);
-
-impl<S> SPIClock<S> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
-        Self(PhantomData)
-    }
-}
-
-/// The I2C clock
-///
-/// The I2C clock is based on the crystal oscillator.
-pub struct I2CClock<I>(PhantomData<I>);
-
-impl<I> I2CClock<I> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
-        Self(PhantomData)
-    }
-}
 
 #[cfg(test)]
 mod tests {

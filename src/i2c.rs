@@ -1,15 +1,33 @@
 //! I2C clock control
 
 use super::{
-    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, I2CClock,
-    Instance,
+    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
 };
 use crate::register::{Field, Register};
+use core::marker::PhantomData;
 
 /// Base I2C clock frequency (Hz)
 const CLOCK_FREQUENCY_HZ: u32 = crate::OSCILLATOR_FREQUENCY_HZ;
 /// Default I2C peripheral clock divider
 const DEFAULT_CLOCK_DIVIDER: u32 = 3;
+
+/// The I2C clock
+///
+/// The I2C clock is based on the crystal oscillator.
+pub struct I2CClock<I>(PhantomData<I>);
+
+impl<I> I2CClock<I> {
+    /// Assume that the clock is enabled, and acquire the enabled clock
+    ///
+    /// # Safety
+    ///
+    /// This may create an alias to memory that is mutably owned by another instance.
+    /// Users should only `assume_enabled` when configuring clocks through another
+    /// API.
+    pub const unsafe fn assume_enabled() -> Self {
+        Self(PhantomData)
+    }
+}
 
 impl<I> Disabled<I2CClock<I>>
 where

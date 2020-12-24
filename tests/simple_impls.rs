@@ -29,7 +29,7 @@ fn adc_compiles() {
 struct SPI;
 
 unsafe impl ccm::Instance for SPI {
-    type Inst = ccm::SPI;
+    type Inst = ccm::spi::SPI;
     fn instance(&self) -> Self::Inst {
         unreachable!("This test doesn't run")
     }
@@ -40,7 +40,7 @@ unsafe impl ccm::Instance for SPI {
 
 #[allow(unused)]
 fn spi_compiles() {
-    let mut spi_clock = unsafe { ccm::SPIClock::<SPI>::assume_enabled() };
+    let mut spi_clock = unsafe { ccm::spi::SPIClock::<SPI>::assume_enabled() };
     let mut spi = SPI;
     spi_clock.set_clock_gate(&mut spi, ccm::ClockGate::Off);
     spi_clock.clock_gate(&spi);
