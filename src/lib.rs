@@ -162,6 +162,7 @@
 //! If you enable the `imxrt-ral` feature, you **must** enable one of these features.
 
 #![cfg_attr(not(test), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(test)]
 macro_rules! assert_send {
@@ -185,6 +186,7 @@ pub mod spi;
 pub mod uart;
 
 #[cfg(feature = "imxrt-ral")]
+#[cfg_attr(docsrs, doc(cfg(feature = "imxrt-ral")))]
 pub mod ral;
 
 use core::marker::PhantomData;

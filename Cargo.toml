@@ -21,3 +21,8 @@ imxrt1060 = []
 
 [dev-dependencies]
 static_assertions = "1.1"
+
+[package.metadata.docs.rs]
+features = ["imxrt1060", "imxrt-ral/imxrt1062"]
+rustdoc-args = ["--cfg", "docsrs"]
+default-target = "thumbv7em-none-eabihf"
