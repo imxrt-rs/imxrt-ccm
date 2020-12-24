@@ -65,3 +65,19 @@ jobs:
       with:
         command: test
         args: --verbose --features=${{ matrix.features }}
+
+  # Make sure documentation builds, and doclinks are valid
+  doc:
+    strategy:
+      matrix:
+        features: ["imxrt-ral/imxrt1062,imxrt1060", "imxrt-ral/imxrt1011,imxrt1010"]
+    env:
+      RUSTDOCFLAGS: -D warnings
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check documentation and doclinks
+      uses: actions-rs/cargo@v1
+      with:
+        command: rustdoc
+        args: --features=${{ matrix.features }}
