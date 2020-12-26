@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["UART","Peripheral instance identifier for UART"]],"fn":[["configure","Configure the UART clock root"],["frequency","Returns the UART clock frequency"]],"struct":[["UARTClock","The UART clock"]]});

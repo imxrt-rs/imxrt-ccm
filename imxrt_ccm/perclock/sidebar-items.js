@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["GPT","Peripheral instance identifier for GPT"],["Selection","Periodic clock selection"]],"fn":[["configure","Configure the periodic clock root"],["frequency","Returns the periodic clock frequency"],["selection","Returns the periodic clock selection"]],"struct":[["PIT","Peripheral instance identifier for PIT"],["PerClock","The periodic clock root"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["I2C","Peripheral instance identifier for I2C"]],"fn":[["configure","Configure the I2C clock root, specifying a clock divider"],["frequency","Returns the I2C clock frequency"]],"struct":[["I2CClock","The I2C clock"]]});

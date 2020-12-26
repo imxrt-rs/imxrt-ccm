@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["frequency","Returns the ARM and IPG clock frequencies"],["set_frequency","Set the ARM clock frequency, returning the ARM and IPG clock speeds"]],"struct":[["ARMClock","The ARM clock frequency"],["IPGClock","The IPG clock frequency"]]});
