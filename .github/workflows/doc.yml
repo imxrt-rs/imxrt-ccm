@@ -22,7 +22,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: rustdoc
-        args: --features imxrt1060 --features imxrt-ral/imxrt1062 --target thumbv7em-none-eabihf -- --cfg docsrs
+        args: --features imxrt1060 --features imxrt-ral/imxrt1062 -- --cfg docsrs
 
     - name: Write redirect
       run: echo "<meta http-equiv=\"refresh\" content=\"0;url=imxrt_ccm\">" > target/thumbv7em-none-eabihf/doc/index.html
