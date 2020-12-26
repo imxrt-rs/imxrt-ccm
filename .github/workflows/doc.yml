@@ -20,7 +20,6 @@ jobs:
 
     - name: Generate docs
       uses: actions-rs/cargo@v1
-      command: rustdoc
       with:
         command: rustdoc
         args: --features imxrt1060 --features imxrt-ral/imxrt1062 --target thumbv7em-none-eabihf -- --cfg docsrs
