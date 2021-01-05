@@ -1,6 +1,6 @@
 //! SPI clock control
 
-use super::{ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance};
+use super::{ClockGate, ClockGateLocation, ClockGateLocator, Instance};
 use crate::register::{Field, Register};
 use core::marker::PhantomData;
 
@@ -14,23 +14,16 @@ const CLOCK_FREQUENCY_HZ: u32 = 528_000_000;
 pub struct SPIClock<S>(PhantomData<S>);
 
 impl<S> SPIClock<S> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
+    pub(crate) const fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<S> Disabled<SPIClock<S>>
+impl<S> SPIClock<S>
 where
     S: Instance<Inst = SPI>,
 {
-    /// Enable the SPI clocks, specifying the clock divider
+    /// Configure the SPI clocks, specifying the clock divider
     ///
     /// The divider should be between [1, 8]. If you supply a divider
     /// outside of that closed range, the implementation will saturate the
@@ -38,11 +31,11 @@ where
     ///
     /// **1010 only:** the divider range is [1, 16].
     ///
-    /// When `enable` returns, all SPI clock gates will be set to off.
+    /// When `configure_divider` returns, all SPI clock gates will be set to off.
     /// Use [`clock_gate`](struct.SPIClock.html#method.clock_gate)
     /// to turn on SPI clock gates.
     #[inline(always)]
-    pub fn enable_divider(self, _: &mut Handle, divider: u32) -> SPIClock<S> {
+    pub fn configure_divider(&mut self, divider: u32) {
         unsafe {
             super::set_clock_gate::<S>(SPI::SPI1, ClockGate::Off);
             super::set_clock_gate::<S>(SPI::SPI2, ClockGate::Off);
@@ -51,17 +44,16 @@ where
 
             configure(divider)
         };
-        self.0
     }
 
-    /// Enable the SPI clocks with a default divider
+    /// Configure the SPI clocks with a default divider
     ///
-    /// When `enable` returns, all SPI clock gates will be set to off.
+    /// When `configure` returns, all SPI clock gates will be set to off.
     /// Use [`clock_gate`](struct.SPIClock.html#method.clock_gate)
     /// to turn on SPI clock gates.
     #[inline(always)]
-    pub fn enable(self, handle: &mut Handle) -> SPIClock<S> {
-        self.enable_divider(handle, DEFAULT_CLOCK_DIVIDER)
+    pub fn configure(&mut self) {
+        self.configure_divider(DEFAULT_CLOCK_DIVIDER);
     }
 }
 

@@ -12,15 +12,20 @@ use crate::{
 };
 use imxrt_ral as ral;
 
+/// Pairs the RAL instances to CCM clocks
+pub struct Clocks;
+
+impl crate::Clocks for Clocks {
+    type PIT = ral::pit::Instance;
+    type GPT = ral::gpt::Instance;
+    type UART = ral::lpuart::Instance;
+    type SPI = ral::lpspi::Instance;
+    type I2C = ral::lpi2c::Instance;
+}
+
 /// Helper for a clock control module designed to the
 /// RAL interface.
-pub type CCM = crate::CCM<
-    ral::pit::Instance,
-    ral::gpt::Instance,
-    ral::lpuart::Instance,
-    ral::lpspi::Instance,
-    ral::lpi2c::Instance,
->;
+pub type CCM = crate::CCM<Clocks>;
 
 /// A periodic clock that controls RAL PIT and GPT timings
 pub type PerClock = crate::perclock::PerClock<ral::pit::Instance, ral::gpt::Instance>;
@@ -43,7 +48,7 @@ impl CCM {
     ///
     /// let ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
     /// ```
-    pub const fn from_ral(_: ral::ccm::Instance) -> Self {
+    pub fn from_ral(_: ral::ccm::Instance) -> Self {
         // Safety: we "own" the CCM instance, so no one
         // else can (safely) access it.
         unsafe { crate::CCM::new() }
@@ -67,7 +72,7 @@ unsafe impl Instance for ral::dcdc::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::dcdc::DCDC;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut dcdc = DCDC::take().unwrap();
 /// handle.set_clock_gate_dcdc(&mut dcdc, ClockGate::On);
 /// handle.clock_gate_dcdc(&dcdc);
@@ -92,7 +97,7 @@ unsafe impl Instance for ral::dma0::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::dma0::DMA0;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut dma = DMA0::take().unwrap();
 /// handle.set_clock_gate_dma(&mut dma, ClockGate::On);
 /// handle.clock_gate_dma(&dma);
@@ -129,8 +134,9 @@ unsafe impl Instance for ral::lpi2c::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::lpi2c::LPI2C2;
 ///
-/// let CCM{ mut handle, i2c_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// let mut i2c_clock = i2c_clock.enable(&mut handle);
+/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut i2c_clock = ccm.i2c_clock_mut();
+/// i2c_clock.configure();
 /// let mut i2c = LPI2C2::take().unwrap();
 /// i2c_clock.set_clock_gate(&mut i2c, ClockGate::On);
 /// i2c_clock.clock_gate(&i2c);
@@ -162,8 +168,9 @@ unsafe impl Instance for ral::gpt::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::gpt::GPT2;
 ///
-/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// let mut perclock = perclock.enable(&mut handle);
+/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut perclock = ccm.perclock_mut();
+/// perclock.configure();
 /// let mut gpt = GPT2::take().unwrap();
 /// perclock.set_clock_gate_gpt(&mut gpt, ClockGate::On);
 /// perclock.clock_gate_gpt(&gpt);
@@ -188,8 +195,9 @@ unsafe impl Instance for ral::pit::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::pit::PIT;
 ///
-/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// let mut perclock = perclock.enable(&mut handle);
+/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut perclock = ccm.perclock_mut();
+/// perclock.configure();
 /// let mut pit = PIT::take().unwrap();
 /// perclock.set_clock_gate_pit(&mut pit, ClockGate::On);
 /// perclock.clock_gate_pit(&pit);
@@ -225,8 +233,9 @@ unsafe impl Instance for ral::lpspi::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::lpspi::LPSPI1;
 ///
-/// let CCM{ mut handle, spi_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// let mut spi_clock = spi_clock.enable(&mut handle);
+/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut spi_clock = ccm.spi_clock_mut();
+/// spi_clock.configure();
 /// let mut spi = LPSPI1::take().unwrap();
 /// spi_clock.set_clock_gate(&mut spi, ClockGate::On);
 /// spi_clock.clock_gate(&spi);
@@ -269,8 +278,9 @@ unsafe impl Instance for ral::lpuart::Instance {
 /// use imxrt_ral::ccm;
 /// use imxrt_ral::lpuart::LPUART4;
 ///
-/// let CCM{ mut handle, uart_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
-/// let mut uart_clock = uart_clock.enable(&mut handle);
+/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut uart_clock = ccm.uart_clock_mut();
+/// uart_clock.configure();
 /// let mut uart = LPUART4::take().unwrap();
 /// uart_clock.set_clock_gate(&mut uart, ClockGate::On);
 /// uart_clock.clock_gate(&uart);
@@ -310,7 +320,7 @@ unsafe impl Instance for adc::Instance {
 /// #[cfg(feature = "imxrt1010")]
 /// use imxrt_ral::adc1::ADC1;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut adc = ADC1::take().unwrap();
 /// handle.set_clock_gate_adc(&mut adc, ClockGate::On);
 /// handle.clock_gate_adc(&adc);
@@ -355,7 +365,7 @@ unsafe impl Instance for pwm::Instance {
 /// #[cfg(feature = "imxrt1010")]
 /// use imxrt_ral::pwm1::PWM1;
 ///
-/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();
+/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();
 /// let mut pwm = PWM1::take().unwrap();
 /// handle.set_clock_gate_pwm(&mut pwm, ClockGate::On);
 /// handle.clock_gate_pwm(&pwm);
@@ -365,6 +375,22 @@ struct PWMClockGate;
 
 #[cfg(test)]
 mod tests {
+
+    macro_rules! assert_send {
+        ($type:ty) => {
+            ::static_assertions::assert_impl_all!($type: Send);
+        };
+    }
+
+    macro_rules! assert_not_sync {
+        ($type:ty) => {
+            ::static_assertions::assert_not_impl_any!($type: Sync);
+        };
+    }
+
+    assert_send!(super::CCM);
+    assert_not_sync!(super::CCM);
+
     assert_send!(super::PerClock);
     assert_not_sync!(super::PerClock);
 

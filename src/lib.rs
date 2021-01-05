@@ -58,11 +58,16 @@
 //!     }
 //! }
 //!
-//! type CCM = ccm::CCM<
-//!     # (), (), (), (),
+//! struct MyClocks;
+//! impl ccm::Clocks for MyClocks {
+//!     type I2C = I2C;
 //!     // Other clock types...
-//!     I2C
-//! >;
+//! #   type SPI = ();
+//! #   type UART = ();
+//! #   type GPT = ();
+//! #   type PIT = ();
+//! }
+//! type CCM = ccm::CCM<MyClocks>;
 //!
 //! fn take_ccm() -> Option<CCM> {
 //!   // TODO safety check that ensures
@@ -70,9 +75,9 @@
 //!   Some(unsafe { CCM::new() })
 //! }
 //!
-//! let CCM{ mut handle, i2c_clock, .. } = take_ccm().unwrap();
+//! let mut ccm = take_ccm().unwrap();
 //! // Enable the clock, which disables all clock gates
-//! let mut i2c_clock = i2c_clock.enable(&mut handle);
+//! let mut i2c_clock = ccm.i2c_clock_mut().configure_divider(8);
 //! ```
 //!
 //! We recommend that you create driver initialization APIs that require clocks. By requiring an immutable
@@ -110,11 +115,18 @@
 //! #         }
 //! #     }
 //! # }
-//! struct I2CDriver {
-//!     inst: I2C,
-//!     // ...
-//! }
+//! # struct MyClocks;
+//! # impl ccm::Clocks for MyClocks {
+//! #     type I2C = I2C;
+//! #     // Other clock types...
+//! #   type SPI = ();
+//! #   type UART = ();
+//! #   type GPT = ();
+//! #   type PIT = ();
+//! # }
+//! # type CCM = ccm::CCM<MyClocks>;
 //!
+//! struct I2CDriver { inst: I2C }
 //! impl I2CDriver {
 //!     pub fn new(inst: I2C, clock: &ccm::i2c::I2CClock<I2C>) -> I2CDriver {
 //!         // ...
@@ -127,11 +139,11 @@
 //!
 //! let mut i2c3 = // Get I2C3 instance...
 //!     # I2C { instance_id: 3 };
-//! # let mut i2c_clock = unsafe { ccm::i2c::I2CClock::<I2C>::assume_enabled() };
+//! # let mut ccm = unsafe { CCM::new() };
 //! // Enable I2C3 clock gate
-//! i2c_clock.set_clock_gate(&mut i2c3, ccm::ClockGate::On);
+//! ccm.i2c_clock_mut().set_clock_gate(&mut i2c3, ccm::ClockGate::On);
 //! // Create the higher-level driver, requires the I2C clock
-//! let i2c = I2CDriver::new(i2c3, &i2c_clock);
+//! let i2c = I2CDriver::new(i2c3, ccm.i2c_clock());
 //! ```
 //!
 //! # `imxrt-ral` support
@@ -164,19 +176,6 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(test)]
-macro_rules! assert_send {
-    ($type:ty) => {
-        ::static_assertions::assert_impl_all!($type: Send);
-    };
-}
-#[cfg(test)]
-macro_rules! assert_not_sync {
-    ($type:ty) => {
-        ::static_assertions::assert_not_impl_any!($type: Sync);
-    };
-}
-
 pub mod arm;
 mod gate;
 pub mod i2c;
@@ -190,6 +189,8 @@ pub mod uart;
 pub mod ral;
 
 use core::marker::PhantomData;
+
+use perclock::PerClock;
 
 /// Describes the location of a clock gate field
 #[derive(Clone, Copy)]
@@ -278,7 +279,7 @@ mod private {
 ///
 /// You should only implement `Instance` on a true i.MX RT peripheral instance.
 /// `Instance`s are only used when you have both a mutable reference to the instance,
-/// and a mutable reference to the CCM [`Handle`](struct.Handle.html). An incorrect
+/// and a mutable reference to the [`CCM`]. An incorrect
 /// implementation will let you control global, mutable state that should not be
 /// associated with the object.
 pub unsafe trait Instance {
@@ -391,24 +392,65 @@ impl ClockGateLocator for PWM {
     }
 }
 
-/// Handle to the CCM register block
+/// Correlates an instance type to a CCM clock root
 ///
-/// `Handle` also supports clock gating for peripherals that
-/// don't have an obvious clock root, like DMA.
-pub struct Handle(PhantomData<*const ()>);
+/// If you're usage doesn't require a clock, fill in an empty
+/// tuple, `()`, or any type that _doesn't_ implement [`Instance`].
+pub trait Clocks {
+    /// PIT instance
+    type PIT;
+    /// GPT instance
+    type GPT;
+    /// UART instance
+    type UART;
+    /// SPI instance
+    type SPI;
+    /// I2C instance
+    type I2C;
+}
 
-unsafe impl Send for Handle {}
+/// The clock control module (CCM)
+#[non_exhaustive]
+pub struct CCM<C: Clocks> {
+    /// The periodic clock handle
+    ///
+    /// `perclock` is used for timers, including GPT and PIT timers
+    perclock: perclock::PerClock<C::PIT, C::GPT>,
+    /// The UART clock
+    ///
+    /// `uart_clock` is for UART peripherals.
+    uart_clock: uart::UARTClock<C::UART>,
+    /// The SPI clock
+    ///
+    /// `spi_clock` is for SPI peripherals.
+    spi_clock: spi::SPIClock<C::SPI>,
+    /// The I2C clock
+    ///
+    /// `i2c_clock` is for I2C peripherals.
+    i2c_clock: i2c::I2CClock<C::I2C>,
+    /// Marker to prevent default Sync implementation
+    _not_sync: PhantomData<*const ()>,
+}
 
-impl Handle {
-    /// Create an instance to the CCM Handle
+unsafe impl<C: Clocks> Send for CCM<C> {}
+
+impl<C: Clocks> CCM<C> {
+    /// Construct a new CCM peripheral
     ///
     /// # Safety
     ///
-    /// The returned `Handle` may mutably alias another `Handle`.
-    /// Users should use a safer interface to acquire a [`CCM`],
-    /// which contains the `Handle` you should use.
-    pub const unsafe fn new() -> Self {
-        Handle(PhantomData)
+    /// This should only be called once. Ideally, it's encapsulated behind another
+    /// constructor that takes ownership of CCM peripheral memory. Calling this more
+    /// than once will let you access global, mutable memory that's assumed to not
+    /// be aliased.
+    pub unsafe fn new() -> Self {
+        CCM {
+            perclock: perclock::PerClock::new(),
+            uart_clock: uart::UARTClock::new(),
+            spi_clock: spi::SPIClock::new(),
+            i2c_clock: i2c::I2CClock::new(),
+            _not_sync: PhantomData,
+        }
     }
 
     /// Returns the clock gate setting for the DCDC buck converter
@@ -510,54 +552,6 @@ impl Handle {
     }
 }
 
-/// The root clocks and CCM handle
-///
-/// Most root clocks are disabled. Call `enable`, and supply the
-/// `handle`, to enable them.
-#[non_exhaustive]
-pub struct CCM<P, G, U, S, I> {
-    /// The handle to the CCM register block
-    ///
-    /// `Handle` is used throughout the HAL
-    pub handle: Handle,
-    /// The periodic clock handle
-    ///
-    /// `perclock` is used for timers, including GPT and PIT timers
-    pub perclock: Disabled<perclock::PerClock<P, G>>,
-    /// The UART clock
-    ///
-    /// `uart_clock` is for UART peripherals.
-    pub uart_clock: Disabled<uart::UARTClock<U>>,
-    /// The SPI clock
-    ///
-    /// `spi_clock` is for SPI peripherals.
-    pub spi_clock: Disabled<spi::SPIClock<S>>,
-    /// The I2C clock
-    ///
-    /// `i2c_clock` is for I2C peripherals.
-    pub i2c_clock: Disabled<i2c::I2CClock<I>>,
-}
-
-impl<P, G, U, S, I> CCM<P, G, U, S, I> {
-    /// Construct a new CCM peripheral
-    ///
-    /// # Safety
-    ///
-    /// This should only be called once. Ideally, it's encapsulated behind another
-    /// constructor that takes ownership of CCM peripheral memory. Calling this more
-    /// than once will let you access global, mutable memory that's assumed to not
-    /// be aliased.
-    pub const unsafe fn new() -> Self {
-        CCM {
-            handle: Handle::new(),
-            perclock: Disabled(perclock::PerClock::assume_enabled()),
-            uart_clock: Disabled(uart::UARTClock::assume_enabled()),
-            spi_clock: Disabled(spi::SPIClock::assume_enabled()),
-            i2c_clock: Disabled(i2c::I2CClock::assume_enabled()),
-        }
-    }
-}
-
 /// Describes a clock gate setting
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -587,13 +581,63 @@ impl ClockGate {
 /// Crystal oscillator frequency
 const OSCILLATOR_FREQUENCY_HZ: u32 = 24_000_000;
 
-/// A disabled clock of type `Clock`
-///
-/// Call `enable` on your instance to enable the clock.
-pub struct Disabled<Clock>(Clock);
+impl<C> CCM<C>
+where
+    C: Clocks,
+    C::PIT: Instance<Inst = perclock::PIT>,
+    C::GPT: Instance<Inst = perclock::GPT>,
+{
+    /// Returns a reference to the periodic clock
+    pub fn perclock(&self) -> &PerClock<C::PIT, C::GPT> {
+        &self.perclock
+    }
+    /// Returns a mutable reference to the periodic clock
+    pub fn perclock_mut(&mut self) -> &mut PerClock<C::PIT, C::GPT> {
+        &mut self.perclock
+    }
+}
 
-#[cfg(test)]
-mod tests {
-    assert_send!(super::Handle);
-    assert_not_sync!(super::Handle);
+impl<C> CCM<C>
+where
+    C: Clocks,
+    C::I2C: Instance<Inst = i2c::I2C>,
+{
+    /// Returns a reference to the I2C clock
+    pub fn i2c_clock(&self) -> &i2c::I2CClock<C::I2C> {
+        &self.i2c_clock
+    }
+    /// Returns a mutable reference to the I2C clock
+    pub fn i2c_clock_mut(&mut self) -> &mut i2c::I2CClock<C::I2C> {
+        &mut self.i2c_clock
+    }
+}
+
+impl<C> CCM<C>
+where
+    C: Clocks,
+    C::SPI: Instance<Inst = spi::SPI>,
+{
+    /// Returns a reference to the SPI clock
+    pub fn spi_clock(&self) -> &spi::SPIClock<C::SPI> {
+        &self.spi_clock
+    }
+    /// Returns a mutable reference to the SPI clock
+    pub fn spi_clock_mut(&mut self) -> &mut spi::SPIClock<C::SPI> {
+        &mut self.spi_clock
+    }
+}
+
+impl<C> CCM<C>
+where
+    C: Clocks,
+    C::UART: Instance<Inst = uart::UART>,
+{
+    /// Returns a reference to the UART clock
+    pub fn uart_clock(&self) -> &uart::UARTClock<C::UART> {
+        &self.uart_clock
+    }
+    /// Returns a mutable reference to the uart clock
+    pub fn uart_clock_mut(&mut self) -> &mut uart::UARTClock<C::UART> {
+        &mut self.uart_clock
+    }
 }

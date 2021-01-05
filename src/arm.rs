@@ -23,8 +23,8 @@ use crate::register::Field;
 
 /// The ARM clock frequency
 ///
-/// See [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm`)
-/// and [`Handle::frequency_arm`](crate::Handle::frequency_arm`) for safe
+/// See [`CCM::set_frequency_arm`](crate::CCM::set_frequency_arm`)
+/// and [`CCM::frequency_arm`](crate::CCM::frequency_arm`) for safe
 /// mutators and accessors.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ARMClock(pub u32);
@@ -33,8 +33,8 @@ pub struct ARMClock(pub u32);
 /// The IPG clock frequency runs on the AHB_CLOCK_ROOT. It's a divided
 /// ARM clock.
 ///
-/// See [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm`)
-/// and [`Handle::frequency_arm`](crate::Handle::frequency_arm`) for safe
+/// See [`CCM::set_frequency_arm`](crate::CCM::set_frequency_arm`)
+/// and [`CCM::frequency_arm`](crate::CCM::frequency_arm`) for safe
 /// mutators and accessors.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct IPGClock(pub u32);
@@ -250,7 +250,7 @@ pub(crate) const ARM_CONTEXT: Context<'static> = Context {
 ///
 /// Modifies CCM and CCM_ANALOG peripheral memory. This may be aliased
 /// elsewhere, and could be in the middle of a modification. Users should
-/// prefer the safer [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm)
+/// prefer the safer [`CCM::set_frequency_arm`](crate::CCM::set_frequency_arm)
 /// method.
 pub unsafe fn set_frequency(hz: u32) -> (ARMClock, IPGClock) {
     on_ahb_clk_oscillator(|| {
@@ -270,7 +270,7 @@ pub unsafe fn set_frequency(hz: u32) -> (ARMClock, IPGClock) {
 /// # Safety
 ///
 /// Reads multiple CCM registers without synchronization. It's safer to use
-/// [`Handle::frequency_arm`](crate::Handle::frequency_arm) to read the frequencies.
+/// [`CCM::frequency_arm`](crate::CCM::frequency_arm) to read the frequencies.
 pub unsafe fn frequency() -> (ARMClock, IPGClock) {
     let timings = ARM_CONTEXT.timings();
     (ARMClock(timings.arm_hz), IPGClock(timings.ipg_hz()))

@@ -1,8 +1,6 @@
 //! I2C clock control
 
-use super::{
-    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
-};
+use super::{set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Instance};
 use crate::register::{Field, Register};
 use core::marker::PhantomData;
 
@@ -17,32 +15,25 @@ const DEFAULT_CLOCK_DIVIDER: u32 = 3;
 pub struct I2CClock<I>(PhantomData<I>);
 
 impl<I> I2CClock<I> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
-        Self(PhantomData)
+    pub(crate) const fn new() -> Self {
+        I2CClock(PhantomData)
     }
 }
 
-impl<I> Disabled<I2CClock<I>>
+impl<I> I2CClock<I>
 where
     I: Instance<Inst = I2C>,
 {
-    /// Enable the I2C clocks, and supply the clock divider.
+    /// Configure the I2C clocks, and supply the clock divider.
     ///
     /// The divider should be between [1, 64]. The function will treat a 0 as 1,
     /// and anything greater than 64 as 64.
     ///
-    /// When `enable` returns, all I2C clock gates will be set to off.
+    /// When `configure` returns, all I2C clock gates will be set to off.
     /// Use [`clock_gate`](struct.I2CClock.html#method.clock_gate)
     /// to turn on I2C clock gates.
     #[inline(always)]
-    pub fn enable_divider(self, _: &mut Handle, divider: u32) -> I2CClock<I> {
+    pub fn configure_divider(&mut self, divider: u32) {
         unsafe {
             set_clock_gate::<I>(I2C::I2C1, ClockGate::Off);
             set_clock_gate::<I>(I2C::I2C2, ClockGate::Off);
@@ -51,20 +42,19 @@ where
 
             configure(divider)
         };
-        self.0
     }
 
-    /// Enable the I2C clocks with a default divider
+    /// Configure the I2C clocks with a default divider
     ///
     /// The default divider will allow the I2C peripheral to support both
     /// 100KHz and 400KHz clock speeds.
     ///
-    /// When `enable` returns, all I2C clock gates will be set to off.
+    /// When `configure` returns, all I2C clock gates will be set to off.
     /// Use [`clock_gate`](struct.I2CClock.html#method.clock_gate)
     /// to turn on I2C clock gates.
     #[inline(always)]
-    pub fn enable(self, handle: &mut Handle) -> I2CClock<I> {
-        self.enable_divider(handle, DEFAULT_CLOCK_DIVIDER)
+    pub fn configure(&mut self) {
+        self.configure_divider(DEFAULT_CLOCK_DIVIDER);
     }
 }
 

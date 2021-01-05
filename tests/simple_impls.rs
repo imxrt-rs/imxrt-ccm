@@ -18,9 +18,18 @@ unsafe impl ccm::Instance for ADC {
     }
 }
 
+struct TestClocks;
+impl ccm::Clocks for TestClocks {
+    type PIT = ();
+    type GPT = ();
+    type SPI = SPI;
+    type I2C = ();
+    type UART = ();
+}
+
 #[allow(unused)]
 fn adc_compiles() {
-    let mut handle = unsafe { ccm::Handle::new() };
+    let mut handle = unsafe { ccm::CCM::<TestClocks>::new() };
     let mut adc = ADC;
     handle.set_clock_gate_adc(&mut adc, ccm::ClockGate::Off);
     handle.clock_gate_adc(&adc);
@@ -40,8 +49,10 @@ unsafe impl ccm::Instance for SPI {
 
 #[allow(unused)]
 fn spi_compiles() {
-    let mut spi_clock = unsafe { ccm::spi::SPIClock::<SPI>::assume_enabled() };
+    let mut handle = unsafe { ccm::CCM::<TestClocks>::new() };
     let mut spi = SPI;
-    spi_clock.set_clock_gate(&mut spi, ccm::ClockGate::Off);
-    spi_clock.clock_gate(&spi);
+    handle
+        .spi_clock_mut()
+        .set_clock_gate(&mut spi, ccm::ClockGate::Off);
+    handle.spi_clock().clock_gate(&spi);
 }

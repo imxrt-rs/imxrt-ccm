@@ -1,8 +1,6 @@
 //! UART clock control
 
-use super::{
-    set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance,
-};
+use super::{set_clock_gate, ClockGate, ClockGateLocation, ClockGateLocator, Instance};
 use crate::register::{Field, Register};
 use core::marker::PhantomData;
 
@@ -16,42 +14,35 @@ const DEFAULT_CLOCK_DIVIDER: u32 = 1;
 pub struct UARTClock<C>(PhantomData<C>);
 
 impl<C> UARTClock<C> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
+    pub(crate) const fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<U> Disabled<UARTClock<U>>
+impl<U> UARTClock<U>
 where
     U: Instance<Inst = UART>,
 {
-    /// Enable the UART clocks with default divider
+    /// Configure the UART clocks with default divider
     ///
-    /// When `enable` returns, all UART clock gates will be set to off.
+    /// When `configure` returns, all UART clock gates will be set to off.
     /// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)
     /// to turn on UART clock gates.
     #[inline(always)]
-    pub fn enable(self, handle: &mut Handle) -> UARTClock<U> {
-        self.enable_divider(handle, DEFAULT_CLOCK_DIVIDER)
+    pub fn configure(&mut self) {
+        self.configure_divider(DEFAULT_CLOCK_DIVIDER);
     }
 
-    /// Enable the UART clocks with a clock divider.
+    /// Configure the UART clocks with a clock divider.
     ///
     /// The divider should be between [1, 64]. The function will treat a 0 as 1,
     /// and anything greater than 64 as 64.
     ///
-    /// When `enable` returns, all UART clock gates will be set to off.
+    /// When `configure_divider` returns, all UART clock gates will be set to off.
     /// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)
     /// to turn on UART clock gates.
     #[inline(always)]
-    pub fn enable_divider(self, _: &mut Handle, divider: u32) -> UARTClock<U> {
+    pub fn configure_divider(&mut self, divider: u32) {
         unsafe {
             set_clock_gate::<U>(UART::UART1, ClockGate::Off);
             set_clock_gate::<U>(UART::UART2, ClockGate::Off);
@@ -64,7 +55,6 @@ where
 
             configure(divider)
         };
-        self.0
     }
 }
 

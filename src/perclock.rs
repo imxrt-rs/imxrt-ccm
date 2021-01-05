@@ -1,6 +1,6 @@
 //! Periodic clock
 
-use super::{arm, ClockGate, ClockGateLocation, ClockGateLocator, Disabled, Handle, Instance};
+use super::{arm, ClockGate, ClockGateLocation, ClockGateLocator, Instance};
 use crate::{
     register::{Field, Register},
     OSCILLATOR_FREQUENCY_HZ,
@@ -14,14 +14,7 @@ use core::marker::PhantomData;
 pub struct PerClock<P, G>(PhantomData<(P, G)>);
 
 impl<P, G> PerClock<P, G> {
-    /// Assume that the clock is enabled, and acquire the enabled clock
-    ///
-    /// # Safety
-    ///
-    /// This may create an alias to memory that is mutably owned by another instance.
-    /// Users should only `assume_enabled` when configuring clocks through another
-    /// API.
-    pub const unsafe fn assume_enabled() -> Self {
+    pub(crate) const fn new() -> Self {
         Self(PhantomData)
     }
 }
@@ -82,7 +75,7 @@ impl<P, G> PerClock<P, G> {
     /// The method requires a reference to the CCM `Handle`, since it may need to read
     /// the IPG clock frequency.
     #[inline(always)]
-    pub fn frequency(&self, _: &Handle) -> u32 {
+    pub fn frequency(&self) -> u32 {
         // Safety: we satisfy the safety requirements for both the ARM frequency
         // call, and also the periodic clock frequency call.
         unsafe { frequency() }
@@ -146,42 +139,36 @@ where
     }
 }
 
-impl<P, G> Disabled<PerClock<P, G>>
+impl<P, G> PerClock<P, G>
 where
     P: Instance<Inst = PIT>,
     G: Instance<Inst = GPT>,
 {
-    /// Enable the periodic clock root, specifying the clock divider
+    /// Configure the periodic clock root, specifying the clock divider
     ///
     /// The divider should be between [1, 64]. The function will treat a 0 as 1,
     /// and anything greater than 64 as 64.
     ///
-    /// When `enable` returns, all GPT and PIT clock gates will be set to off. To
-    /// re-enable clock gates, use the clock gate methods on [`PerClock`](struct.PerClock.html).
+    /// When `configure` returns, all GPT and PIT clock gates will be set to off. To
+    /// re-configure clock gates, use the clock gate methods on [`PerClock`](struct.PerClock.html).
     #[inline(always)]
-    pub fn enable_selection_divider(
-        self,
-        _: &mut Handle,
-        selection: Selection,
-        divider: u32,
-    ) -> PerClock<P, G> {
+    pub fn configure_selection_divider(&mut self, selection: Selection, divider: u32) {
         unsafe {
             super::set_clock_gate::<G>(GPT::GPT1, ClockGate::Off);
             super::set_clock_gate::<G>(GPT::GPT2, ClockGate::Off);
             super::set_clock_gate::<P>(PIT, ClockGate::Off);
             configure(selection, divider);
         };
-        self.0
     }
 
-    /// Enable the periodic clock root with a default divider. The default divider will result
+    /// Configure the periodic clock root with a default divider. The default divider will result
     /// in a periodic clock frequency of **1MHz** from the crystal oscillator.
     ///
-    /// When `enable` returns, all GPT and PIT clock gates will be set to off. To
-    /// re-enable clock gates, use the clock gate methods on [`PerClock`](struct.PerClock.html).
+    /// When `configure` returns, all GPT and PIT clock gates will be set to off. To
+    /// re-configure clock gates, use the clock gate methods on [`PerClock`](struct.PerClock.html).
     #[inline(always)]
-    pub fn enable(self, handle: &mut Handle) -> PerClock<P, G> {
-        self.enable_selection_divider(handle, Selection::Oscillator, DEFAULT_CLOCK_DIVIDER)
+    pub fn configure(&mut self) {
+        self.configure_selection_divider(Selection::Oscillator, DEFAULT_CLOCK_DIVIDER)
     }
 }
 
