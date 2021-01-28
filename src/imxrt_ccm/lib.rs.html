@@ -600,6 +600,50 @@
 <span id="597">597</span>
 <span id="598">598</span>
 <span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Clock Control Module (CCM) driver for i.MX RT systems</span>
 <span class="doccomment">//!</span>
@@ -661,11 +705,16 @@
 <span class="doccomment">//!     }</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! type CCM = ccm::CCM&lt;</span>
-<span class="doccomment">//!     # (), (), (), (),</span>
+<span class="doccomment">//! struct MyClocks;</span>
+<span class="doccomment">//! impl ccm::Clocks for MyClocks {</span>
+<span class="doccomment">//!     type I2C = I2C;</span>
 <span class="doccomment">//!     // Other clock types...</span>
-<span class="doccomment">//!     I2C</span>
-<span class="doccomment">//! &gt;;</span>
+<span class="doccomment">//! #   type SPI = ();</span>
+<span class="doccomment">//! #   type UART = ();</span>
+<span class="doccomment">//! #   type GPT = ();</span>
+<span class="doccomment">//! #   type PIT = ();</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! type CCM = ccm::CCM&lt;MyClocks&gt;;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! fn take_ccm() -&gt; Option&lt;CCM&gt; {</span>
 <span class="doccomment">//!   // TODO safety check that ensures</span>
@@ -673,9 +722,9 @@
 <span class="doccomment">//!   Some(unsafe { CCM::new() })</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! let CCM{ mut handle, i2c_clock, .. } = take_ccm().unwrap();</span>
+<span class="doccomment">//! let mut ccm = take_ccm().unwrap();</span>
 <span class="doccomment">//! // Enable the clock, which disables all clock gates</span>
-<span class="doccomment">//! let mut i2c_clock = i2c_clock.enable(&amp;mut handle);</span>
+<span class="doccomment">//! let mut i2c_clock = ccm.i2c_clock_mut().configure_divider(8);</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! We recommend that you create driver initialization APIs that require clocks. By requiring an immutable</span>
@@ -713,11 +762,18 @@
 <span class="doccomment">//! #         }</span>
 <span class="doccomment">//! #     }</span>
 <span class="doccomment">//! # }</span>
-<span class="doccomment">//! struct I2CDriver {</span>
-<span class="doccomment">//!     inst: I2C,</span>
-<span class="doccomment">//!     // ...</span>
-<span class="doccomment">//! }</span>
+<span class="doccomment">//! # struct MyClocks;</span>
+<span class="doccomment">//! # impl ccm::Clocks for MyClocks {</span>
+<span class="doccomment">//! #     type I2C = I2C;</span>
+<span class="doccomment">//! #     // Other clock types...</span>
+<span class="doccomment">//! #   type SPI = ();</span>
+<span class="doccomment">//! #   type UART = ();</span>
+<span class="doccomment">//! #   type GPT = ();</span>
+<span class="doccomment">//! #   type PIT = ();</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! # type CCM = ccm::CCM&lt;MyClocks&gt;;</span>
 <span class="doccomment">//!</span>
+<span class="doccomment">//! struct I2CDriver { inst: I2C }</span>
 <span class="doccomment">//! impl I2CDriver {</span>
 <span class="doccomment">//!     pub fn new(inst: I2C, clock: &amp;ccm::i2c::I2CClock&lt;I2C&gt;) -&gt; I2CDriver {</span>
 <span class="doccomment">//!         // ...</span>
@@ -730,11 +786,11 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! let mut i2c3 = // Get I2C3 instance...</span>
 <span class="doccomment">//!     # I2C { instance_id: 3 };</span>
-<span class="doccomment">//! # let mut i2c_clock = unsafe { ccm::i2c::I2CClock::&lt;I2C&gt;::assume_enabled() };</span>
+<span class="doccomment">//! # let mut ccm = unsafe { CCM::new() };</span>
 <span class="doccomment">//! // Enable I2C3 clock gate</span>
-<span class="doccomment">//! i2c_clock.set_clock_gate(&amp;mut i2c3, ccm::ClockGate::On);</span>
+<span class="doccomment">//! ccm.i2c_clock_mut().set_clock_gate(&amp;mut i2c3, ccm::ClockGate::On);</span>
 <span class="doccomment">//! // Create the higher-level driver, requires the I2C clock</span>
-<span class="doccomment">//! let i2c = I2CDriver::new(i2c3, &amp;i2c_clock);</span>
+<span class="doccomment">//! let i2c = I2CDriver::new(i2c3, ccm.i2c_clock());</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # `imxrt-ral` support</span>
@@ -767,19 +823,6 @@
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">no_std</span>)]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">feature</span>(<span class="ident">doc_cfg</span>))]</span>
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">assert_send</span> {
-    (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        ::<span class="ident">static_assertions</span>::<span class="macro">assert_impl_all</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">Send</span>);
-    };
-}
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">assert_not_sync</span> {
-    (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        ::<span class="ident">static_assertions</span>::<span class="macro">assert_not_impl_any</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">Sync</span>);
-    };
-}
-
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">arm</span>;
 <span class="kw">mod</span> <span class="ident">gate</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">i2c</span>;
@@ -793,6 +836,8 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">ral</span>;
 
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
+
+<span class="kw">use</span> <span class="ident">perclock</span>::<span class="ident">PerClock</span>;
 
 <span class="doccomment">/// Describes the location of a clock gate field</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
@@ -881,7 +926,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// You should only implement `Instance` on a true i.MX RT peripheral instance.</span>
 <span class="doccomment">/// `Instance`s are only used when you have both a mutable reference to the instance,</span>
-<span class="doccomment">/// and a mutable reference to the CCM [`Handle`](struct.Handle.html). An incorrect</span>
+<span class="doccomment">/// and a mutable reference to the [`CCM`]. An incorrect</span>
 <span class="doccomment">/// implementation will let you control global, mutable state that should not be</span>
 <span class="doccomment">/// associated with the object.</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">trait</span> <span class="ident">Instance</span> {
@@ -994,24 +1039,65 @@
     }
 }
 
-<span class="doccomment">/// Handle to the CCM register block</span>
+<span class="doccomment">/// Correlates an instance type to a CCM clock root</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// `Handle` also supports clock gating for peripherals that</span>
-<span class="doccomment">/// don&#39;t have an obvious clock root, like DMA.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Handle</span>(<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> ()<span class="op">&gt;</span>);
+<span class="doccomment">/// If you&#39;re usage doesn&#39;t require a clock, fill in an empty</span>
+<span class="doccomment">/// tuple, `()`, or any type that _doesn&#39;t_ implement [`Instance`].</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Clocks</span> {
+    <span class="doccomment">/// PIT instance</span>
+    <span class="kw">type</span> <span class="ident">PIT</span>;
+    <span class="doccomment">/// GPT instance</span>
+    <span class="kw">type</span> <span class="ident">GPT</span>;
+    <span class="doccomment">/// UART instance</span>
+    <span class="kw">type</span> <span class="ident">UART</span>;
+    <span class="doccomment">/// SPI instance</span>
+    <span class="kw">type</span> <span class="ident">SPI</span>;
+    <span class="doccomment">/// I2C instance</span>
+    <span class="kw">type</span> <span class="ident">I2C</span>;
+}
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">Handle</span> {}
+<span class="doccomment">/// The clock control module (CCM)</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Clocks</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The periodic clock handle</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `perclock` is used for timers, including GPT and PIT timers</span>
+    <span class="ident">perclock</span>: <span class="ident">perclock</span>::<span class="ident">PerClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">PIT</span>, <span class="ident">C</span>::<span class="ident">GPT</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The UART clock</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `uart_clock` is for UART peripherals.</span>
+    <span class="ident">uart_clock</span>: <span class="ident">uart</span>::<span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">UART</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The SPI clock</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `spi_clock` is for SPI peripherals.</span>
+    <span class="ident">spi_clock</span>: <span class="ident">spi</span>::<span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">SPI</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The I2C clock</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `i2c_clock` is for I2C peripherals.</span>
+    <span class="ident">i2c_clock</span>: <span class="ident">i2c</span>::<span class="ident">I2CClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">I2C</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Marker to prevent default Sync implementation</span>
+    <span class="ident">_not_sync</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> ()<span class="op">&gt;</span>,
+}
 
-<span class="kw">impl</span> <span class="ident">Handle</span> {
-    <span class="doccomment">/// Create an instance to the CCM Handle</span>
+<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Clocks</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Clocks</span><span class="op">&gt;</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Construct a new CCM peripheral</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Safety</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// The returned `Handle` may mutably alias another `Handle`.</span>
-    <span class="doccomment">/// Users should use a safer interface to acquire a [`CCM`],</span>
-    <span class="doccomment">/// which contains the `Handle` you should use.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">Handle</span>(<span class="ident">PhantomData</span>)
+    <span class="doccomment">/// This should only be called once. Ideally, it&#39;s encapsulated behind another</span>
+    <span class="doccomment">/// constructor that takes ownership of CCM peripheral memory. Calling this more</span>
+    <span class="doccomment">/// than once will let you access global, mutable memory that&#39;s assumed to not</span>
+    <span class="doccomment">/// be aliased.</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">CCM</span> {
+            <span class="ident">perclock</span>: <span class="ident">perclock</span>::<span class="ident">PerClock</span>::<span class="ident">new</span>(),
+            <span class="ident">uart_clock</span>: <span class="ident">uart</span>::<span class="ident">UARTClock</span>::<span class="ident">new</span>(),
+            <span class="ident">spi_clock</span>: <span class="ident">spi</span>::<span class="ident">SPIClock</span>::<span class="ident">new</span>(),
+            <span class="ident">i2c_clock</span>: <span class="ident">i2c</span>::<span class="ident">I2CClock</span>::<span class="ident">new</span>(),
+            <span class="ident">_not_sync</span>: <span class="ident">PhantomData</span>,
+        }
     }
 
     <span class="doccomment">/// Returns the clock gate setting for the DCDC buck converter</span>
@@ -1113,54 +1199,6 @@
     }
 }
 
-<span class="doccomment">/// The root clocks and CCM handle</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Most root clocks are disabled. Call `enable`, and supply the</span>
-<span class="doccomment">/// `handle`, to enable them.</span>
-<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">G</span>, <span class="ident">U</span>, <span class="ident">S</span>, <span class="ident">I</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The handle to the CCM register block</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `Handle` is used throughout the HAL</span>
-    <span class="kw">pub</span> <span class="ident">handle</span>: <span class="ident">Handle</span>,
-    <span class="doccomment">/// The periodic clock handle</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `perclock` is used for timers, including GPT and PIT timers</span>
-    <span class="kw">pub</span> <span class="ident">perclock</span>: <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">perclock</span>::<span class="ident">PerClock</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">G</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The UART clock</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `uart_clock` is for UART peripherals.</span>
-    <span class="kw">pub</span> <span class="ident">uart_clock</span>: <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">uart</span>::<span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The SPI clock</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `spi_clock` is for SPI peripherals.</span>
-    <span class="kw">pub</span> <span class="ident">spi_clock</span>: <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">spi</span>::<span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The I2C clock</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `i2c_clock` is for I2C peripherals.</span>
-    <span class="kw">pub</span> <span class="ident">i2c_clock</span>: <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">i2c</span>::<span class="ident">I2CClock</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">G</span>, <span class="ident">U</span>, <span class="ident">S</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">G</span>, <span class="ident">U</span>, <span class="ident">S</span>, <span class="ident">I</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Construct a new CCM peripheral</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should only be called once. Ideally, it&#39;s encapsulated behind another</span>
-    <span class="doccomment">/// constructor that takes ownership of CCM peripheral memory. Calling this more</span>
-    <span class="doccomment">/// than once will let you access global, mutable memory that&#39;s assumed to not</span>
-    <span class="doccomment">/// be aliased.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">CCM</span> {
-            <span class="ident">handle</span>: <span class="ident">Handle</span>::<span class="ident">new</span>(),
-            <span class="ident">perclock</span>: <span class="ident">Disabled</span>(<span class="ident">perclock</span>::<span class="ident">PerClock</span>::<span class="ident">assume_enabled</span>()),
-            <span class="ident">uart_clock</span>: <span class="ident">Disabled</span>(<span class="ident">uart</span>::<span class="ident">UARTClock</span>::<span class="ident">assume_enabled</span>()),
-            <span class="ident">spi_clock</span>: <span class="ident">Disabled</span>(<span class="ident">spi</span>::<span class="ident">SPIClock</span>::<span class="ident">assume_enabled</span>()),
-            <span class="ident">i2c_clock</span>: <span class="ident">Disabled</span>(<span class="ident">i2c</span>::<span class="ident">I2CClock</span>::<span class="ident">assume_enabled</span>()),
-        }
-    }
-}
-
 <span class="doccomment">/// Describes a clock gate setting</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
@@ -1190,15 +1228,66 @@
 <span class="doccomment">/// Crystal oscillator frequency</span>
 <span class="kw">const</span> <span class="ident">OSCILLATOR_FREQUENCY_HZ</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">24_000_000</span>;
 
-<span class="doccomment">/// A disabled clock of type `Clock`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Call `enable` on your instance to enable the clock.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">Clock</span><span class="op">&gt;</span>(<span class="ident">Clock</span>);
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">C</span>: <span class="ident">Clocks</span>,
+    <span class="ident">C</span>::<span class="ident">PIT</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">perclock</span>::<span class="ident">PIT</span><span class="op">&gt;</span>,
+    <span class="ident">C</span>::<span class="ident">GPT</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">perclock</span>::<span class="ident">GPT</span><span class="op">&gt;</span>,
+{
+    <span class="doccomment">/// Returns a reference to the periodic clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">perclock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PerClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">PIT</span>, <span class="ident">C</span>::<span class="ident">GPT</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">perclock</span>
+    }
+    <span class="doccomment">/// Returns a mutable reference to the periodic clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">perclock_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">PerClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">PIT</span>, <span class="ident">C</span>::<span class="ident">GPT</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">perclock</span>
+    }
+}
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="macro">assert_send</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">Handle</span>);
-    <span class="macro">assert_not_sync</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">Handle</span>);
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">C</span>: <span class="ident">Clocks</span>,
+    <span class="ident">C</span>::<span class="ident">I2C</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">i2c</span>::<span class="ident">I2C</span><span class="op">&gt;</span>,
+{
+    <span class="doccomment">/// Returns a reference to the I2C clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">i2c_clock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">i2c</span>::<span class="ident">I2CClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">I2C</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">i2c_clock</span>
+    }
+    <span class="doccomment">/// Returns a mutable reference to the I2C clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">i2c_clock_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">i2c</span>::<span class="ident">I2CClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">I2C</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">i2c_clock</span>
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">C</span>: <span class="ident">Clocks</span>,
+    <span class="ident">C</span>::<span class="ident">SPI</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">spi</span>::<span class="ident">SPI</span><span class="op">&gt;</span>,
+{
+    <span class="doccomment">/// Returns a reference to the SPI clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spi_clock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">spi</span>::<span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">SPI</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">spi_clock</span>
+    }
+    <span class="doccomment">/// Returns a mutable reference to the SPI clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spi_clock_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">spi</span>::<span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">SPI</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">spi_clock</span>
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">C</span>: <span class="ident">Clocks</span>,
+    <span class="ident">C</span>::<span class="ident">UART</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">uart</span>::<span class="ident">UART</span><span class="op">&gt;</span>,
+{
+    <span class="doccomment">/// Returns a reference to the UART clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">uart_clock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">uart</span>::<span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">UART</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">uart_clock</span>
+    }
+    <span class="doccomment">/// Returns a mutable reference to the uart clock</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">uart_clock_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">uart</span>::<span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">C</span>::<span class="ident">UART</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">uart_clock</span>
+    }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_ccm";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_ccm"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

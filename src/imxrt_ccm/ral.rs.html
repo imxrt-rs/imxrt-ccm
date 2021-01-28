@@ -380,6 +380,32 @@
 <span id="377">377</span>
 <span id="378">378</span>
 <span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Implementations for the imxrt-ral</span>
 <span class="doccomment">//!</span>
@@ -395,15 +421,20 @@
 };
 <span class="kw">use</span> <span class="ident">imxrt_ral</span> <span class="kw">as</span> <span class="ident">ral</span>;
 
+<span class="doccomment">/// Pairs the RAL instances to CCM clocks</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Clocks</span>;
+
+<span class="kw">impl</span> <span class="kw">crate</span>::<span class="ident">Clocks</span> <span class="kw">for</span> <span class="ident">Clocks</span> {
+    <span class="kw">type</span> <span class="ident">PIT</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="ident">pit</span>::<span class="ident">Instance</span>;
+    <span class="kw">type</span> <span class="ident">GPT</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="ident">gpt</span>::<span class="ident">Instance</span>;
+    <span class="kw">type</span> <span class="ident">UART</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="ident">lpuart</span>::<span class="ident">Instance</span>;
+    <span class="kw">type</span> <span class="ident">SPI</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="ident">lpspi</span>::<span class="ident">Instance</span>;
+    <span class="kw">type</span> <span class="ident">I2C</span> <span class="op">=</span> <span class="ident">ral</span>::<span class="ident">lpi2c</span>::<span class="ident">Instance</span>;
+}
+
 <span class="doccomment">/// Helper for a clock control module designed to the</span>
 <span class="doccomment">/// RAL interface.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">CCM</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">CCM</span><span class="op">&lt;</span>
-    <span class="ident">ral</span>::<span class="ident">pit</span>::<span class="ident">Instance</span>,
-    <span class="ident">ral</span>::<span class="ident">gpt</span>::<span class="ident">Instance</span>,
-    <span class="ident">ral</span>::<span class="ident">lpuart</span>::<span class="ident">Instance</span>,
-    <span class="ident">ral</span>::<span class="ident">lpspi</span>::<span class="ident">Instance</span>,
-    <span class="ident">ral</span>::<span class="ident">lpi2c</span>::<span class="ident">Instance</span>,
-<span class="op">&gt;</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">CCM</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">CCM</span><span class="op">&lt;</span><span class="ident">Clocks</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// A periodic clock that controls RAL PIT and GPT timings</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">PerClock</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">perclock</span>::<span class="ident">PerClock</span><span class="op">&lt;</span><span class="ident">ral</span>::<span class="ident">pit</span>::<span class="ident">Instance</span>, <span class="ident">ral</span>::<span class="ident">gpt</span>::<span class="ident">Instance</span><span class="op">&gt;</span>;
@@ -426,7 +457,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// let ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">from_ral</span>(<span class="kw">_</span>: <span class="ident">ral</span>::<span class="ident">ccm</span>::<span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_ral</span>(<span class="kw">_</span>: <span class="ident">ral</span>::<span class="ident">ccm</span>::<span class="ident">Instance</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="comment">// Safety: we &quot;own&quot; the CCM instance, so no one</span>
         <span class="comment">// else can (safely) access it.</span>
         <span class="kw">unsafe</span> { <span class="kw">crate</span>::<span class="ident">CCM</span>::<span class="ident">new</span>() }
@@ -450,7 +481,7 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::dcdc::DCDC;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
 <span class="doccomment">/// let mut dcdc = DCDC::take().unwrap();</span>
 <span class="doccomment">/// handle.set_clock_gate_dcdc(&amp;mut dcdc, ClockGate::On);</span>
 <span class="doccomment">/// handle.clock_gate_dcdc(&amp;dcdc);</span>
@@ -475,7 +506,7 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::dma0::DMA0;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
 <span class="doccomment">/// let mut dma = DMA0::take().unwrap();</span>
 <span class="doccomment">/// handle.set_clock_gate_dma(&amp;mut dma, ClockGate::On);</span>
 <span class="doccomment">/// handle.clock_gate_dma(&amp;dma);</span>
@@ -512,8 +543,9 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::lpi2c::LPI2C2;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, i2c_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
-<span class="doccomment">/// let mut i2c_clock = i2c_clock.enable(&amp;mut handle);</span>
+<span class="doccomment">/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut i2c_clock = ccm.i2c_clock_mut();</span>
+<span class="doccomment">/// i2c_clock.configure();</span>
 <span class="doccomment">/// let mut i2c = LPI2C2::take().unwrap();</span>
 <span class="doccomment">/// i2c_clock.set_clock_gate(&amp;mut i2c, ClockGate::On);</span>
 <span class="doccomment">/// i2c_clock.clock_gate(&amp;i2c);</span>
@@ -545,8 +577,9 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::gpt::GPT2;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
-<span class="doccomment">/// let mut perclock = perclock.enable(&amp;mut handle);</span>
+<span class="doccomment">/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut perclock = ccm.perclock_mut();</span>
+<span class="doccomment">/// perclock.configure();</span>
 <span class="doccomment">/// let mut gpt = GPT2::take().unwrap();</span>
 <span class="doccomment">/// perclock.set_clock_gate_gpt(&amp;mut gpt, ClockGate::On);</span>
 <span class="doccomment">/// perclock.clock_gate_gpt(&amp;gpt);</span>
@@ -571,8 +604,9 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::pit::PIT;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, perclock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
-<span class="doccomment">/// let mut perclock = perclock.enable(&amp;mut handle);</span>
+<span class="doccomment">/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut perclock = ccm.perclock_mut();</span>
+<span class="doccomment">/// perclock.configure();</span>
 <span class="doccomment">/// let mut pit = PIT::take().unwrap();</span>
 <span class="doccomment">/// perclock.set_clock_gate_pit(&amp;mut pit, ClockGate::On);</span>
 <span class="doccomment">/// perclock.clock_gate_pit(&amp;pit);</span>
@@ -608,8 +642,9 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::lpspi::LPSPI1;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, spi_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
-<span class="doccomment">/// let mut spi_clock = spi_clock.enable(&amp;mut handle);</span>
+<span class="doccomment">/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut spi_clock = ccm.spi_clock_mut();</span>
+<span class="doccomment">/// spi_clock.configure();</span>
 <span class="doccomment">/// let mut spi = LPSPI1::take().unwrap();</span>
 <span class="doccomment">/// spi_clock.set_clock_gate(&amp;mut spi, ClockGate::On);</span>
 <span class="doccomment">/// spi_clock.clock_gate(&amp;spi);</span>
@@ -652,8 +687,9 @@
 <span class="doccomment">/// use imxrt_ral::ccm;</span>
 <span class="doccomment">/// use imxrt_ral::lpuart::LPUART4;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, uart_clock, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
-<span class="doccomment">/// let mut uart_clock = uart_clock.enable(&amp;mut handle);</span>
+<span class="doccomment">/// let mut ccm = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut uart_clock = ccm.uart_clock_mut();</span>
+<span class="doccomment">/// uart_clock.configure();</span>
 <span class="doccomment">/// let mut uart = LPUART4::take().unwrap();</span>
 <span class="doccomment">/// uart_clock.set_clock_gate(&amp;mut uart, ClockGate::On);</span>
 <span class="doccomment">/// uart_clock.clock_gate(&amp;uart);</span>
@@ -693,7 +729,7 @@
 <span class="doccomment">/// #[cfg(feature = &quot;imxrt1010&quot;)]</span>
 <span class="doccomment">/// use imxrt_ral::adc1::ADC1;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
 <span class="doccomment">/// let mut adc = ADC1::take().unwrap();</span>
 <span class="doccomment">/// handle.set_clock_gate_adc(&amp;mut adc, ClockGate::On);</span>
 <span class="doccomment">/// handle.clock_gate_adc(&amp;adc);</span>
@@ -738,7 +774,7 @@
 <span class="doccomment">/// #[cfg(feature = &quot;imxrt1010&quot;)]</span>
 <span class="doccomment">/// use imxrt_ral::pwm1::PWM1;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let CCM{ mut handle, .. } = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
+<span class="doccomment">/// let mut handle = ccm::CCM::take().map(CCM::from_ral).unwrap();</span>
 <span class="doccomment">/// let mut pwm = PWM1::take().unwrap();</span>
 <span class="doccomment">/// handle.set_clock_gate_pwm(&amp;mut pwm, ClockGate::On);</span>
 <span class="doccomment">/// handle.clock_gate_pwm(&amp;pwm);</span>
@@ -748,6 +784,22 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
+
+    <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">assert_send</span> {
+        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            ::<span class="ident">static_assertions</span>::<span class="macro">assert_impl_all</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">Send</span>);
+        };
+    }
+
+    <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">assert_not_sync</span> {
+        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            ::<span class="ident">static_assertions</span>::<span class="macro">assert_not_impl_any</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">Sync</span>);
+        };
+    }
+
+    <span class="macro">assert_send</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">CCM</span>);
+    <span class="macro">assert_not_sync</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">CCM</span>);
+
     <span class="macro">assert_send</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">PerClock</span>);
     <span class="macro">assert_not_sync</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">PerClock</span>);
 
@@ -761,4 +813,5 @@
     <span class="macro">assert_not_sync</span><span class="macro">!</span>(<span class="kw">super</span>::<span class="ident">I2CClock</span>);
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_ccm";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_ccm"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

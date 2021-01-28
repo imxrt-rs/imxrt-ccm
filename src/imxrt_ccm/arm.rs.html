@@ -361,8 +361,8 @@
 
 <span class="doccomment">/// The ARM clock frequency</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// See [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm`)</span>
-<span class="doccomment">/// and [`Handle::frequency_arm`](crate::Handle::frequency_arm`) for safe</span>
+<span class="doccomment">/// See [`CCM::set_frequency_arm`](crate::CCM::set_frequency_arm`)</span>
+<span class="doccomment">/// and [`CCM::frequency_arm`](crate::CCM::frequency_arm`) for safe</span>
 <span class="doccomment">/// mutators and accessors.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ARMClock</span>(<span class="kw">pub</span> <span class="ident">u32</span>);
@@ -371,8 +371,8 @@
 <span class="doccomment">/// The IPG clock frequency runs on the AHB_CLOCK_ROOT. It&#39;s a divided</span>
 <span class="doccomment">/// ARM clock.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// See [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm`)</span>
-<span class="doccomment">/// and [`Handle::frequency_arm`](crate::Handle::frequency_arm`) for safe</span>
+<span class="doccomment">/// See [`CCM::set_frequency_arm`](crate::CCM::set_frequency_arm`)</span>
+<span class="doccomment">/// and [`CCM::frequency_arm`](crate::CCM::frequency_arm`) for safe</span>
 <span class="doccomment">/// mutators and accessors.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IPGClock</span>(<span class="kw">pub</span> <span class="ident">u32</span>);
@@ -588,7 +588,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Modifies CCM and CCM_ANALOG peripheral memory. This may be aliased</span>
 <span class="doccomment">/// elsewhere, and could be in the middle of a modification. Users should</span>
-<span class="doccomment">/// prefer the safer [`Handle::set_frequency_arm`](crate::Handle::set_frequency_arm)</span>
+<span class="doccomment">/// prefer the safer [`CCM::set_frequency_arm`](crate::CCM::set_frequency_arm)</span>
 <span class="doccomment">/// method.</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_frequency</span>(<span class="ident">hz</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">ARMClock</span>, <span class="ident">IPGClock</span>) {
     <span class="ident">on_ahb_clk_oscillator</span>(<span class="op">|</span><span class="op">|</span> {
@@ -608,7 +608,7 @@
 <span class="doccomment">/// # Safety</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Reads multiple CCM registers without synchronization. It&#39;s safer to use</span>
-<span class="doccomment">/// [`Handle::frequency_arm`](crate::Handle::frequency_arm) to read the frequencies.</span>
+<span class="doccomment">/// [`CCM::frequency_arm`](crate::CCM::frequency_arm) to read the frequencies.</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">frequency</span>() <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">ARMClock</span>, <span class="ident">IPGClock</span>) {
     <span class="kw">let</span> <span class="ident">timings</span> <span class="op">=</span> <span class="ident">ARM_CONTEXT</span>.<span class="ident">timings</span>();
     (<span class="ident">ARMClock</span>(<span class="ident">timings</span>.<span class="ident">arm_hz</span>), <span class="ident">IPGClock</span>(<span class="ident">timings</span>.<span class="ident">ipg_hz</span>()))
@@ -671,4 +671,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_ccm";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_ccm"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

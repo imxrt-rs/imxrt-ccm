@@ -222,22 +222,10 @@
 <span id="219">219</span>
 <span id="220">220</span>
 <span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
-<span id="231">231</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! UART clock control</span>
 
-<span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">set_clock_gate</span>, <span class="ident">ClockGate</span>, <span class="ident">ClockGateLocation</span>, <span class="ident">ClockGateLocator</span>, <span class="ident">Disabled</span>, <span class="ident">Handle</span>, <span class="ident">Instance</span>,
-};
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">set_clock_gate</span>, <span class="ident">ClockGate</span>, <span class="ident">ClockGateLocation</span>, <span class="ident">ClockGateLocator</span>, <span class="ident">Instance</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">register</span>::{<span class="ident">Field</span>, <span class="ident">Register</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
@@ -251,42 +239,35 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Assume that the clock is enabled, and acquire the enabled clock</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This may create an alias to memory that is mutably owned by another instance.</span>
-    <span class="doccomment">/// Users should only `assume_enabled` when configuring clocks through another</span>
-    <span class="doccomment">/// API.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_enabled</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span>(<span class="ident">PhantomData</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">U</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">UART</span><span class="op">&gt;</span>,
 {
-    <span class="doccomment">/// Enable the UART clocks with default divider</span>
+    <span class="doccomment">/// Configure the UART clocks with default divider</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// When `enable` returns, all UART clock gates will be set to off.</span>
+    <span class="doccomment">/// When `configure` returns, all UART clock gates will be set to off.</span>
     <span class="doccomment">/// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)</span>
     <span class="doccomment">/// to turn on UART clock gates.</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable</span>(<span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Handle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">enable_divider</span>(<span class="ident">handle</span>, <span class="ident">DEFAULT_CLOCK_DIVIDER</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="self">self</span>.<span class="ident">configure_divider</span>(<span class="ident">DEFAULT_CLOCK_DIVIDER</span>);
     }
 
-    <span class="doccomment">/// Enable the UART clocks with a clock divider.</span>
+    <span class="doccomment">/// Configure the UART clocks with a clock divider.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The divider should be between [1, 64]. The function will treat a 0 as 1,</span>
     <span class="doccomment">/// and anything greater than 64 as 64.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// When `enable` returns, all UART clock gates will be set to off.</span>
+    <span class="doccomment">/// When `configure_divider` returns, all UART clock gates will be set to off.</span>
     <span class="doccomment">/// Use [`clock_gate`](struct.UARTClock.html#method.clock_gate)</span>
     <span class="doccomment">/// to turn on UART clock gates.</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable_divider</span>(<span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Handle</span>, <span class="ident">divider</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UARTClock</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure_divider</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">divider</span>: <span class="ident">u32</span>) {
         <span class="kw">unsafe</span> {
             <span class="ident">set_clock_gate</span>::<span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>(<span class="ident">UART</span>::<span class="ident">UART1</span>, <span class="ident">ClockGate</span>::<span class="ident">Off</span>);
             <span class="ident">set_clock_gate</span>::<span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>(<span class="ident">UART</span>::<span class="ident">UART2</span>, <span class="ident">ClockGate</span>::<span class="ident">Off</span>);
@@ -299,7 +280,6 @@
 
             <span class="ident">configure</span>(<span class="ident">divider</span>)
         };
-        <span class="self">self</span>.<span class="number">0</span>
     }
 }
 
@@ -465,4 +445,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_ccm";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_ccm"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

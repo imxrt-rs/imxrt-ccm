@@ -214,18 +214,10 @@
 <span id="211">211</span>
 <span id="212">212</span>
 <span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
-<span id="218">218</span>
-<span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! SPI clock control</span>
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">ClockGate</span>, <span class="ident">ClockGateLocation</span>, <span class="ident">ClockGateLocator</span>, <span class="ident">Disabled</span>, <span class="ident">Handle</span>, <span class="ident">Instance</span>};
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">ClockGate</span>, <span class="ident">ClockGateLocation</span>, <span class="ident">ClockGateLocator</span>, <span class="ident">Instance</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">register</span>::{<span class="ident">Field</span>, <span class="ident">Register</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
@@ -239,23 +231,16 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Assume that the clock is enabled, and acquire the enabled clock</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This may create an alias to memory that is mutably owned by another instance.</span>
-    <span class="doccomment">/// Users should only `assume_enabled` when configuring clocks through another</span>
-    <span class="doccomment">/// API.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_enabled</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span>(<span class="ident">PhantomData</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Disabled</span><span class="op">&lt;</span><span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">S</span>: <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">Inst</span> <span class="op">=</span> <span class="ident">SPI</span><span class="op">&gt;</span>,
 {
-    <span class="doccomment">/// Enable the SPI clocks, specifying the clock divider</span>
+    <span class="doccomment">/// Configure the SPI clocks, specifying the clock divider</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The divider should be between [1, 8]. If you supply a divider</span>
     <span class="doccomment">/// outside of that closed range, the implementation will saturate the</span>
@@ -263,11 +248,11 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// **1010 only:** the divider range is [1, 16].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// When `enable` returns, all SPI clock gates will be set to off.</span>
+    <span class="doccomment">/// When `configure_divider` returns, all SPI clock gates will be set to off.</span>
     <span class="doccomment">/// Use [`clock_gate`](struct.SPIClock.html#method.clock_gate)</span>
     <span class="doccomment">/// to turn on SPI clock gates.</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable_divider</span>(<span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Handle</span>, <span class="ident">divider</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure_divider</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">divider</span>: <span class="ident">u32</span>) {
         <span class="kw">unsafe</span> {
             <span class="kw">super</span>::<span class="ident">set_clock_gate</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="ident">SPI</span>::<span class="ident">SPI1</span>, <span class="ident">ClockGate</span>::<span class="ident">Off</span>);
             <span class="kw">super</span>::<span class="ident">set_clock_gate</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="ident">SPI</span>::<span class="ident">SPI2</span>, <span class="ident">ClockGate</span>::<span class="ident">Off</span>);
@@ -276,17 +261,16 @@
 
             <span class="ident">configure</span>(<span class="ident">divider</span>)
         };
-        <span class="self">self</span>.<span class="number">0</span>
     }
 
-    <span class="doccomment">/// Enable the SPI clocks with a default divider</span>
+    <span class="doccomment">/// Configure the SPI clocks with a default divider</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// When `enable` returns, all SPI clock gates will be set to off.</span>
+    <span class="doccomment">/// When `configure` returns, all SPI clock gates will be set to off.</span>
     <span class="doccomment">/// Use [`clock_gate`](struct.SPIClock.html#method.clock_gate)</span>
     <span class="doccomment">/// to turn on SPI clock gates.</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable</span>(<span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Handle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SPIClock</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">enable_divider</span>(<span class="ident">handle</span>, <span class="ident">DEFAULT_CLOCK_DIVIDER</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="self">self</span>.<span class="ident">configure_divider</span>(<span class="ident">DEFAULT_CLOCK_DIVIDER</span>);
     }
 }
 
@@ -445,4 +429,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "imxrt_ccm";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="imxrt_ccm"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
