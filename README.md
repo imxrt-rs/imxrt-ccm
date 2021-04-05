@@ -2,6 +2,10 @@
 
 Clock Control Module (CCM) driver for i.MX RT processors.
 
+> :information_source: This experimental driver was not fully integrated into
+imxrt-rs projects. It's marked read only while we evaluate its usefulness. Use
+the CCM APIs provided by your HAL or RAL to configure clocks.
+
 #### [API Docs (main branch)][main-api-docs]
 
 [main-api-docs]: https://imxrt-rs.github.io/imxrt-ccm/
